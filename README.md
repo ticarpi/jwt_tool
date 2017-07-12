@@ -8,7 +8,7 @@ Its functionality includes:
 - Testing for the ***alg=None*** signature-bypass vulnerability
 - Testing the validity of a secret/key
 - Identifying ***weak keys*** via a High-speed ***Dictionary Attack*** 
-- Forging new token payload values and resigning with the **key**
+- Forging new token payload values and resigning with the **key** (for the HMAC-SHA family of algorithms)
 
 ---
 
