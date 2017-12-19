@@ -49,5 +49,6 @@ It will then provide a menu of your available options.
 * A couple of exercises for testing JWT vulnerabilities are provided by [Pentesterlab](https://www.pentesterlab.com). I'd highly recommend a PRO subscription if you are interested in Web App Pentesting.  
   * [JWT (alg=None vulnerability) exercise](https://pentesterlab.com/exercises/jwt)  
   * [JWT_II (RS/HS256 public key mismatch vulnerability) exercise](https://pentesterlab.com/exercises/jwt_ii)  
-
+  * [JWT_III (key-id header field non-sanitisation vulnerability) exercise](https://pentesterlab.com/exercises/jwt_iii)  
+  
   *PLEASE NOTE:* This toolkit will solve the Pentesterlab JWT exercises in a few seconds when used correctly, however I'd **strongly** encourage you to work through these exercises yourself, working out the structure and the weaknesses. After all, it's all about learning...
