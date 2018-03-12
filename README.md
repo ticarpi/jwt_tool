@@ -23,16 +23,16 @@ Customised wordlists are recommended for the Dictionary Attack option.
 *As a speed reference, an Intel i5 laptop can test ~1,000,000 passwords per second on HMAC-SHA256 signing. YMMV.*
 
 ## Installation
-Installation is just a case of downloading the `jwt_toolkit.py` file (or `git clone`ing the repo).  
+Installation is just a case of downloading the `jwt_tool.py` file (or `git clone`ing the repo).  
 (`chmod` the file too if you want to add it to your *$PATH* and call it from anywhere.)
 
 ## Usage
-`$ python jwt_toolkit.py <JWT> (wordlist_file)`  
+`$ python jwt_tool.py <JWT> (wordlist_file)`  
 
 The first argument should be the JWT itself, followed by a wordlist filename (if you are trying to crack the token).  
 
 **For example:**  
-`$ python jwt_toolkit.py eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJhZG1pbiI6IHRydWUsICJuYW1lIjogInRpY2FycGkifQ.DRkDo/XFb/dJCZXiVOMORxq+gcpA7g50xpwfk3UPrJc rockyou.txt`  
+`$ python jwt_tool.py eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJhZG1pbiI6IHRydWUsICJuYW1lIjogInRpY2FycGkifQ.DRkDo/XFb/dJCZXiVOMORxq+gcpA7g50xpwfk3UPrJc rockyou.txt`  
 
 The toolkit will validate the token and list the header and payload values.  
 It will then provide a menu of your available options.  
