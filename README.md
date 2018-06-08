@@ -36,7 +36,7 @@ The first argument should be the JWT itself, followed by a filename/filepath (fo
 
 The toolkit will validate the token and list the header and payload values.  
 It will then provide a menu of your available options.  
-*Note:* signing the token is currently supported using HS256, HS386, HS512 algorithms
+*Note:* signing the token is currently supported using HS256, HS384, HS512 algorithms
 
 Input is in either standard or url-safe JWT format, and the resulting tokens are output in both formats for your ease of use.
 
