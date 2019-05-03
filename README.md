@@ -54,5 +54,9 @@ Input is in either standard or url-safe JWT format, and the resulting tokens are
   * [JWT_II (RS/HS256 public key mismatch vulnerability) exercise](https://pentesterlab.com/exercises/jwt_ii)  
   * [JWT_III (key-id header field non-sanitisation vulnerability) exercise](https://pentesterlab.com/exercises/jwt_iii)  
   * and just head on over to [https://pentesterlab.com/exercises](https://pentesterlab.com/exercises) to search for the others!
-  
+
   *PLEASE NOTE:* This toolkit will solve all of the Pentesterlab JWT exercises in a few seconds when used correctly, however I'd **strongly** encourage you to work through these exercises yourself, working out the structure and the weaknesses. After all, it's all about learning...
+
+## Tips
+**Regex for finding JWTs in Burp Search:**  
+`ey[A-Za-z0-9_-]*\.[A-Za-z0-9._-]*`
