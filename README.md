@@ -59,6 +59,6 @@ Input is in either standard or url-safe JWT format, and the resulting tokens are
 
 ## Tips
 **Regex for finding JWTs in Burp Search**  
-*make sure 'Case sensitive' and 'Regex' options are ticked*
-`[= ]ey[A-Za-z0-9_-]*\.[A-Za-z0-9._-]*` - url-safe JWT version
+*(make sure 'Case sensitive' and 'Regex' options are ticked)*  
+`[= ]ey[A-Za-z0-9_-]*\.[A-Za-z0-9._-]*` - url-safe JWT version  
 `[= ]ey[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*` - all JWT versions (higher possibility of false positives)
