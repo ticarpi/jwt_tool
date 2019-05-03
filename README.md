@@ -58,5 +58,7 @@ Input is in either standard or url-safe JWT format, and the resulting tokens are
   *PLEASE NOTE:* This toolkit will solve all of the Pentesterlab JWT exercises in a few seconds when used correctly, however I'd **strongly** encourage you to work through these exercises yourself, working out the structure and the weaknesses. After all, it's all about learning...
 
 ## Tips
-**Regex for finding JWTs in Burp Search:**  
-`ey[A-Za-z0-9_-]*\.[A-Za-z0-9._-]*`
+**Regex for finding JWTs in Burp Search**  
+*make sure 'Case sensitive' and 'Regex' options are ticked*
+`[= ]ey[A-Za-z0-9_-]*\.[A-Za-z0-9._-]*` - url-safe JWT version
+`[= ]ey[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*` - all JWT versions (higher possibility of false positives)
