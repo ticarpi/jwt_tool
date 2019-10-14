@@ -29,19 +29,16 @@ def checkSig(sig, contents):
 	print(key)
 	testKey(key, sig, contents, headDict, quiet)
 
-def checkSigKid(sig, contents):
+def checkSigKid(sig, contents,key_file):
 	quiet = False
-	print("\nLoading key file...")
-	key1 = open(keyList).read()
 	print("File loaded: "+keyList)
-	testKey(key1, sig, contents, headDict, quiet)
+	testKey(key_file, sig, contents, headDict, quiet)
 
-def crackSig(sig, contents):
+def crackSig(sig, contents,num_lines,key_list):
 	quiet = True
-	print("\nLoading key dictionary...")
-	print("File loaded: "+keyList)
-	print("Testing "+str(numLines)+" passwords...")
-	for i in keyLst:
+	print("File loaded: {0}".format(key_list))
+	print("Testing {0} passwords".format(num_lines))
+	for i in key_list:
 		testKey(i, sig, contents, headDict, quiet)
 
 def testKey(key, sig, contents, headDict, quiet):
@@ -266,14 +263,14 @@ if __name__ == '__main__':
 # Temporary variables
 	jwt = sys.argv[1]
 	key = ""
-	if len(sys.argv) == 3:
+	""" if len(sys.argv) == 3:
 		keyList = sys.argv[2]
 		numLines = sum(1 for line in open(keyList) if line.rstrip())
 		with open(keyList, "r") as f:
 		    keyLst = f.readlines()
 		keyLst = [x.strip() for x in keyLst]
 	else:
-		keyList = ""
+		keyList = "" """
 
 # Rejig token
 	try:
@@ -315,17 +312,25 @@ if __name__ == '__main__':
 	elif selection == 3:
 		checkSig(sig, contents)
 	elif selection == 4:
-		if keyList != "":
-			checkSigKid(sig, contents)
-		else:
-			print("No dictionary file provided.")
-			usage()
+		print("\nPlease enter the key filename:")
+		file_name= input(">")
+		try:
+			with open(file_name) as f:
+				checkSigKid(sig, contents,f.read())
+		except FileNotFoundError as e:
+			print("[-] File {0} doesn't exists".format(file_name))
 	elif selection == 5:
-		if keyList != "":
-			crackSig(sig, contents)
-		else:
-			print("No dictionary file provided.")
-			usage()
+		print("\nPlease enter the dictionary filename:")
+		file_name= input(">")
+		try:
+			with open(file_name) as f:
+				num_lines = sum(1 for line in open(file_name) if line.rstrip())
+				with open(file_name, "r") as f:
+					lines = f.readlines()
+					key_list = [x.strip() for x in lines]
+					crackSig(sig, contents,num_lines,key_list)
+		except FileNotFoundError as e:
+			print("[-] File {0} doesn't exists".format(file_name))
 	elif selection == 6:
 		tamperToken(paylDict, headDict)
 	else:
