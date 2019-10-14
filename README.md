@@ -17,7 +17,7 @@ This tool is written for **pentesters**, who need to check the strength of the t
 It may also be useful for **developers** who are using JWTs in projects, but would like to test for stability and for known vulnerabilities, when using forged tokens.
 
 ## Requirements
-This tool is written natively in Python 2.x using the common libraries.
+This tool is written natively in Python 3.x using the common libraries.
 
 Customised wordlists are recommended for the Dictionary Attack option.  
 *As a speed reference, an Intel i5 laptop can test ~1,000,000 passwords per second on HMAC-SHA256 signing. YMMV.*
