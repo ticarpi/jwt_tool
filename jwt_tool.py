@@ -134,8 +134,11 @@ def tamperToken(paylDict, headDict):
 		print("["+str(i+1)+"] *ADD A VALUE*")
 		print("[0] Continue to next step")
 		selection = 0
-		print("\nPlease select a field number:\n(or 0 to Continue)")
-		selection = int(input("> "))
+		print("\nPlease select a field number:\n(0 or ENTER to Continue)")
+		try:
+			selection = int(input("> "))
+		except:
+			selection = 0
 		if selection<len(headList) and selection>0:
 			print("\nCurrent value of "+headList[selection]+" is: "+str(headDict[headList[selection]]))
 			print("Please enter new value and hit ENTER")
@@ -151,7 +154,7 @@ def tamperToken(paylDict, headDict):
 		elif selection == 0:
 			break
 		else:
-			exit(1)
+			print("[-] Option not valid \n")
 	print("\nToken payload values:")
 	while True:
 		i = 0
@@ -163,8 +166,11 @@ def tamperToken(paylDict, headDict):
 			i += 1
 		print("[0] Continue to next step")
 		selection = 0
-		print("\nPlease select a field number:\n(or 0 to Continue)")
-		selection = int(input("> "))
+		print("\nPlease select a field number:\n(0 or ENTER to Continue)")
+		try:
+			selection = int(input("> "))
+		except:
+			selection = 0
 		if selection<len(paylList) and selection>0:
 			print("\nCurrent value of "+paylList[selection]+" is: "+str(paylDict[paylList[selection]]))
 			print("Please enter new value and hit ENTER")
@@ -173,14 +179,17 @@ def tamperToken(paylDict, headDict):
 		elif selection == 0:
 			break
 		else:
-			exit(1)
+			print("[-] Option not valid \n")
 	print("\nToken Signing:")
 	print("[1] Sign token with known key")
 	print("[2] Strip signature from token vulnerable to CVE-2015-2951")
 	print("[3] Sign with Public Key bypass vulnerability")
 	print("[4] Sign token with key file")
 	print("\nPlease select an option from above (1-4):")
-	selection = int(input("> "))
+	try:
+		selection = int(input("> "))
+	except:
+		selection = 0
 	if selection == 1:
 		print("\nPlease enter the known key:")
 		key = input("> ")
@@ -188,7 +197,11 @@ def tamperToken(paylDict, headDict):
 		print("[1] HMAC-SHA256")
 		print("[2] HMAC-SHA384")
 		print("[3] HMAC-SHA512")
-		selLength = int(input("> "))
+		try:
+			selLength = int(input("> "))
+		except:
+			print("[-] Option not valid")
+			exit(1)
 		if selLength == 2:
 			keyLength = 384	
 		elif selLength == 3:
@@ -212,30 +225,30 @@ def tamperToken(paylDict, headDict):
 		checkPubKey(headDict, tok2)
 		exit(1)
 	if selection == 4:
-		if keyList == "":
-			print("No dictionary file provided.")
-			usage()
-		else:
-			print("\nLoading key file...")
-			key1 = open(keyList).read()
-			print("File loaded: "+keyList)
-			print("\nPlease enter the keylength:")
-			print("[1] HMAC-SHA256")
-			print("[2] HMAC-SHA384")
-			print("[3] HMAC-SHA512")
+		print("\nLoading key file...")
+		key1 = open(keyList).read()
+		print("File loaded: "+keyList)
+		print("\nPlease enter the keylength:")
+		print("[1] HMAC-SHA256")
+		print("[2] HMAC-SHA384")
+		print("[3] HMAC-SHA512")
+		try:
 			selLength = int(input("> "))
-			if selLength == 2:
-				keyLength = 384	
-			elif selLength == 3:
-				keyLength = 512
-			else:
-				keyLength = 256
-			newSig, badSig, newContents = signToken(headDict, paylDict, key1, keyLength)
-			print("\nYour new forged token:")
-			print("[+] URL safe: "+newContents+"."+newSig)
-			print("[+] Standard: "+newContents+"."+badSig+"\n")
-			exit(1)
+		except:
+			print("[-] Option not valid")
+		if selLength == 2:
+			keyLength = 384	
+		elif selLength == 3:
+			keyLength = 512
+		else:
+			keyLength = 256
+		newSig, badSig, newContents = signToken(headDict, paylDict, key1, keyLength)
+		print("\nYour new forged token:")
+		print("[+] URL safe: "+newContents+"."+newSig)
+		print("[+] Standard: "+newContents+"."+badSig+"\n")
+		exit(1)
 	else:
+		print("[-] Option not valid")
 		exit(1)
 
 
