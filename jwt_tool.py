@@ -1,8 +1,7 @@
 #! /usr/bin/python3
 
-#
-# JWT_Tool version 1.1 (08_06_2018)
-# Written by ticarpi
+# JWT_Tool version 2.1 (15_10_2019)
+# Written by ticarpi, Sparrrgh, Franco Marino
 # Please use responsibly...
 # Software URL: https://github.com/ticarpi/jwt_tool
 # Web: https://www.ticarpi.com
@@ -61,9 +60,9 @@ def crackSig(sig, contents,num_lines,key_list):
 	found = False
 	print("[+] Testing {0} passwords".format(num_lines))
 	for i in key_list:
-		if(testKey(i, sig, contents, headDict)):
+		if(testKey(i.strip("\n"), sig, contents, headDict)):
 			found = True
-			print("[+] {0} is the CORRECT key!".format(i))
+			print("[+] {0} is the CORRECT key!".format(i.strip("\n")))
 	if(not found):
 		print("[-] The key was not found")
 		
@@ -385,5 +384,3 @@ if __name__ == '__main__':
 		print("[-] Option not valid")
 		exit(1)
 	exit(1)
-
-	
