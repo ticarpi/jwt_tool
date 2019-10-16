@@ -112,7 +112,7 @@ def signToken(headDict, paylDict, key, keyLength):
 
 def checkCVE(headDict, tok2):
 	print("\nGenerating alg-stripped token...")
-	alg = "None"
+	alg = "none"
 	newHead = buildHead(alg, headDict)
 	CVEToken = newHead+"."+tok2+"."
 	print("\nSet this new token as the AUTH cookie, or session/local storage data (as appropriate for the web application).\n(This will only be valid on unpatched implementations of JWT.)")
@@ -330,7 +330,7 @@ if __name__ == '__main__':
   		print("[+] "+i+" = "+str(paylDict[i]))
 	print("\n######################################################")
 	print("# Options:                                           #")
-	print("# 1: Check CVE-2015-2951 - alg=None vulnerability    #")
+	print("# 1: Check CVE-2015-2951 - alg=none vulnerability    #")
 	print("# 2: Check for Public Key bypass in RSA mode         #")
 	print("# 3: Check signature against a key                   #")
 	print("# 4: Check signature against a key file (\"kid\")      #")
