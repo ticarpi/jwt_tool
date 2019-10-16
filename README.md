@@ -5,7 +5,7 @@
 Its functionality includes:
 - Checking the validity of a token
 - Testing for the ***RS/HS256*** public key mismatch vulnerability
-- Testing for the ***alg=None*** signature-bypass vulnerability
+- Testing for the ***alg=none*** signature-bypass vulnerability
 - Testing the validity of a secret/key/key file
 - Identifying ***weak keys*** via a High-speed ***Dictionary Attack*** 
 - Forging new token header and payload values and creating a new signature with the **key** or via another attack method
@@ -27,7 +27,7 @@ Installation is just a case of downloading the `jwt_tool.py` file (or `git clone
 (`chmod` the file too if you want to add it to your *$PATH* and call it from anywhere.)
 
 ## Usage
-`$ python jwt_tool.py <JWT> (filename)`  
+`$ python2 jwt_tool.py <JWT> (filename)`  
 
 The first argument should be the JWT itself, followed by a filename/filepath (for cracking the token, or for use as a key file).  
 
