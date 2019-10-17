@@ -19,7 +19,7 @@ It may also be useful for **developers** who are using JWTs in projects, but wou
 
 ## Requirements
 This tool is written natively in **Python 3** using the common libraries.  
-*(An older Python 2.x version is available for those who need it on the old branch, although this will no longer be supported or updated - as of October 2019)*
+*(An older Python 2.x version is available for those who need it on the legacy branch, although this will no longer be supported or updated - as of October 2019)*
 
 Customised wordlists are recommended for the Dictionary Attack option.  
 *As a speed reference, an Intel i5 laptop can test ~1,000,000 passwords per second on HMAC-SHA256 signing. YMMV.*
