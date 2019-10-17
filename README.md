@@ -23,7 +23,8 @@ Customised wordlists are recommended for the Dictionary Attack option.
 *As a speed reference, an Intel i5 laptop can test ~1,000,000 passwords per second on HMAC-SHA256 signing. YMMV.*
 
 ## Installation
-Installation is just a case of downloading the `jwt_tool.py` file (or `git clone`ing the repo).  
+Installation is just a case of downloading the `jwt_tool.py` file (or `git clone`ing this branch of the repo):  
+`$ git clone --single-branch --branch legacy-python2 https://github.com/ticarpi/jwt_tool`
 (`chmod` the file too if you want to add it to your *$PATH* and call it from anywhere.)
 
 ## Usage
