@@ -38,7 +38,6 @@ def crackSig(sig, contents):
     quiet = True
     print("\nLoading key dictionary...")
     print("File loaded: "+keyList)
-#    print("Testing "+str(numLines)+" passwords...")
     for i in keyLst:
         testKey(i, sig, contents, headDict, quiet)
     print("\n[-] Key not found")
@@ -130,10 +129,15 @@ def tamperToken(paylDict, headDict):
             headList.append(pair)
             i += 1
         print("["+str(i+1)+"] *ADD A VALUE*")
+        print("["+str(i+2)+"] *DELETE A VALUE*")
         print("[0] Continue to next step")
         selection = ""
         print("\nPlease select a field number:\n(or 0 to Continue)")
-        selection = eval(input("> "))
+        try:
+            selection = int(input("> "))
+        except:
+            print("Invalid selection")
+            exit(1)
         if selection<len(headList) and selection>0:
             print("\nCurrent value of "+headList[selection]+" is: "+str(headDict[headList[selection]]))
             print("Please enter new value and hit ENTER")
@@ -146,6 +150,16 @@ def tamperToken(paylDict, headDict):
             newVal = input("> ")
             headList.append(newPair)
             headDict[headList[selection]] = newVal
+        elif selection == i+2:
+            print("Please select a Key to DELETE and hit ENTER")
+            i = 0
+            for pair in headDict:
+                menuNum = i+1
+                print("["+str(menuNum)+"] "+pair+" = "+str(headDict[pair]))
+                headList.append(pair)
+                i += 1
+            delPair = eval(input("> "))
+            del headDict[headList[delPair]]
         elif selection == 0:
             break
         else:
@@ -159,15 +173,38 @@ def tamperToken(paylDict, headDict):
             print("["+str(menuNum)+"] "+pair+" = "+str(paylDict[pair]))
             paylList.append(pair)
             i += 1
+        print("["+str(i+1)+"] *ADD A VALUE*")
+        print("["+str(i+2)+"] *DELETE A VALUE*")
         print("[0] Continue to next step")
         selection = ""
         print("\nPlease select a field number:\n(or 0 to Continue)")
-        selection = eval(input("> "))
+        try:
+            selection = int(input("> "))
+        except:
+            print("Invalid selection")
+            exit(1)
         if selection<len(paylList) and selection>0:
             print("\nCurrent value of "+paylList[selection]+" is: "+str(paylDict[paylList[selection]]))
             print("Please enter new value and hit ENTER")
             newVal = input("> ")
             paylDict[paylList[selection]] = newVal
+        elif selection == i+1:
+            print("Please enter new Key and hit ENTER")
+            newPair = input("> ")
+            print("Please enter new value for "+newPair+" and hit ENTER")
+            newVal = input("> ")
+            paylList.append(newPair)
+            paylDict[paylList[selection]] = newVal
+        elif selection == i+2:
+            print("Please select a Key to DELETE and hit ENTER")
+            i = 0
+            for pair in paylDict:
+                menuNum = i+1
+                print("["+str(menuNum)+"] "+pair+" = "+str(paylDict[pair]))
+                paylList.append(pair)
+                i += 1
+            delPair = eval(input("> "))
+            del paylDict[paylList[delPair]]
         elif selection == 0:
             break
         else:
@@ -178,7 +215,11 @@ def tamperToken(paylDict, headDict):
     print("[3] Sign with Public Key bypass vulnerability")
     print("[4] Sign token with key file")
     print("\nPlease select an option from above (1-4):")
-    selection = eval(input("> "))
+    try:
+        selection = int(input("> "))
+    except:
+        print("Invalid selection")
+        exit(1)
     if selection == 1:
         print("\nPlease enter the known key:")
         key = input("> ")
@@ -186,13 +227,20 @@ def tamperToken(paylDict, headDict):
         print("[1] HMAC-SHA256")
         print("[2] HMAC-SHA384")
         print("[3] HMAC-SHA512")
-        selLength = input("> ")
-        if selLength == "2":
+        try:
+            selLength = int(input("> "))
+        except:
+            print("Invalid selection")
+            exit(1)
+        if selLength == 1:
+            keyLength = 256
+        elif selLength == 2:
             keyLength = 384
-        elif selLength == "3":
+        elif selLength == 3:
             keyLength = 512
         else:
-            keyLength = 256
+            print("Invalid selection")
+            exit(1)
         newSig, badSig, newContents = signToken(headDict, paylDict, key, keyLength)
         print("\nYour new forged token:")
         print("[+] URL safe: "+newContents+"."+newSig)
@@ -217,13 +265,20 @@ def tamperToken(paylDict, headDict):
         print("[1] HMAC-SHA256")
         print("[2] HMAC-SHA384")
         print("[3] HMAC-SHA512")
-        selLength = input("> ")
-        if selLength == "2":
+        try:
+            selLength = int(input("> "))
+        except:
+            print("Invalid selection")
+            exit(1)
+        if selLength == 1:
+            keyLength = 256
+        elif selLength == 2:
             keyLength = 384
-        elif selLength == "3":
+        elif selLength == 3:
             keyLength = 512
         else:
-            keyLength = 256
+            print("Invalid selection")
+            exit(1)
         newSig, badSig, newContents = signToken(headDict, paylDict, key1, keyLength)
         print("\nYour new forged token:")
         print("[+] URL safe: "+newContents+"."+newSig)
@@ -232,18 +287,8 @@ def tamperToken(paylDict, headDict):
     else:
         exit(1)
 
-
 if __name__ == '__main__':
 # Print logo
-    # print("\n,----.,----.,----.,----.,----.,----.,----.,----.,----.,----.")
-    # print("----''----''----''----''----''----''----''----''----''----'")
-    # print("     ,--.,--.   ,--.,--------.,--------.             ,--.")
-    # print("     |  ||  |   |  |'--.  .--''--.  .--',---.  ,---. |  |")
-    # print(",--. |  ||  |.'.|  |   |  |      |  |  | .-. || .-. ||  |")
-    # print("|  '-'  /|   ,'.   |   |  |,----.|  |  ' '-' '' '-' '|  |")
-    # print(" `-----' '--'   '--'   `--''----'`--'   `---'  `---' `--'")
-    # print(",----.,----.,----.,----.,----.,----.,----.,----.,----.,----.")
-    # print("'----''----''----''----''----''----''----''----''----''----'")
     print()
     print("   $$$$$\ $$\      $$\ $$$$$$$$\  $$$$$$$$\                  $$\ ")
     print("   \__$$ |$$ | $\  $$ |\__$$  __| \__$$  __|                 $$ |")
@@ -253,7 +298,7 @@ if __name__ == '__main__':
     print("$$ |  $$ |$$$  / \$$$ |   $$ |       $$ |$$ |  $$ |$$ |  $$ |$$ |")
     print("\$$$$$$  |$$  /   \$$ |   $$ |       $$ |\$$$$$$  |\$$$$$$  |$$ |")
     print(" \______/ \__/     \__|   \__|$$$$$$\\__| \______/  \______/ \__|")
-    print("  Version 1.2                 \______|                           ")
+    print(" Version 1.2.1                \______|                           ")
     print()
 
 # Print usage + check token validity
@@ -265,7 +310,6 @@ if __name__ == '__main__':
     key = ""
     if len(sys.argv) == 3:
         keyList = sys.argv[2]
-#        numLines = sum(1 for line in open(keyList) if line.rstrip())
         with open(keyList, "rb") as f:
             keyLst = f.readlines()
         keyLst = [x.strip() for x in keyLst]
@@ -296,42 +340,46 @@ if __name__ == '__main__':
           print("[+] "+i+" = "+str(paylDict[i]))
     print("\n\n########################################################")
     print("#  Options:                                            #")
+    print("#                ==== TAMPERING ====                   #")
+    print("#  1: Tamper with JWT data (multiple signing options)  #")
+    print("#                                                      #")
     print("#             ==== VULNERABILITIES ====                #")
-    print("#  1: Check for the \"none\" algorithm vulnerability     #")
-    print("#  2: Check for HS/RSA key confusion vulnerability     #")
+    print("#  2: Check for the \"none\" algorithm vulnerability     #")
+    print("#  3: Check for HS/RSA key confusion vulnerability     #")
     print("#                                                      #")
     print("#            ==== CRACKING/GUESSING ====               #")
-    print("#  3: Check signature against a key (password)         #")
-    print("#  4: Check signature against a Private Key file       #")
-    print("#  5: Crack signature with supplied dictionary file    #")
-    print("#                                                      #")
-    print("#                ==== TAMPERING ====                   #")
-    print("#  6: Tamper with JWT data (multiple signing options)  #")
+    print("#  4: Check signature against a key (password)         #")
+    print("#  5: Check signature against a Private Key file       #")
+    print("#  6: Crack signature with supplied dictionary file    #")
     print("#                                                      #")
     print("#  0: Quit                                             #")
     print("########################################################")
     print("\nPlease make a selection (1-6)")
-    selection = eval(input("> "))
+    try:
+        selection = int(input("> "))
+    except:
+        print("Invalid selection")
+        exit(1)
     if selection == 1:
-        checkAlgNone(headDict, tok2)
+        tamperToken(paylDict, headDict)
     elif selection == 2:
-        checkPubKey(headDict, tok2)
+        checkAlgNone(headDict, tok2)
     elif selection == 3:
-        checkSig(sig, contents)
+        checkPubKey(headDict, tok2)
     elif selection == 4:
+        checkSig(sig, contents)
+    elif selection == 5:
         if keyList != "":
             checkSigKid(sig, contents)
         else:
-            print("No dictionary file provided.")
+            print("No key file provided.\n")
             usage()
-    elif selection == 5:
+    elif selection == 6:
         if keyList != "":
             crackSig(sig, contents)
         else:
-            print("No dictionary file provided.")
+            print("No dictionary file provided.\n")
             usage()
-    elif selection == 6:
-        tamperToken(paylDict, headDict)
     else:
         exit(1)
     exit(1)
