@@ -37,10 +37,37 @@ def checkSigKid(sig, contents):
 def crackSig(sig, contents):
     quiet = True
     print("\nLoading key dictionary...")
-    print("File loaded: "+keyList)
-    for i in keyLst:
-        testKey(i, sig, contents, headDict, quiet)
-    print("\n[-] Key not found")
+    try:
+        print("File loaded: "+keyList)
+        keyLst = open(keyList, "r", encoding='utf-8', errors='ignore')
+        nextKey = keyLst.readline()
+    except:
+        print("No dictionary file loaded")
+        exit(1)
+    print("Testing passwords in dictionary...")
+    utf8errors = 0
+    wordcount = 0
+    while nextKey:
+        wordcount += 1
+        try:
+            cracked = testKey(nextKey.strip().encode('UTF-8'), sig, contents, headDict, quiet)
+        except:
+            cracked = False
+        if not cracked:
+            if wordcount % 1000000 == 0:
+                print("[*] Tested "+str(int(wordcount/1000000))+" million passwords so far")
+            try:
+                nextKey = keyLst.readline()
+            except:
+                utf8errors  += 1
+                nextKey = keyLst.readline()
+        else:
+            return
+    if cracked == False:
+        print("\n[-] Key not in dictionary")
+        print("\n===============================\nAs your list wasn't able to crack this token you might be better off using longer dictionaries, custom dictionaries, mangling rules, or brute force attacks.\nhashcat (https://hashcat.net/hashcat/) is ideal for this as it is highly optimised for speed. Just add your JWT to a text file, then use the following syntax to give you a good start:\n\n[*] dictionary attacks: hashcat -a 0 -m 16500 jwt.txt passlist.txt\n[*] rule-based attack:  hashcat -a 0 -m 16500 jwt.txt passlist.txt -r rules/best64.rule\n[*] brute-force attack: hashcat -a 3 -m 16500 jwt.txt ?u?l?l?l?l?l?l?l -i --increment-min=6\n===============================\n")
+    if utf8errors > 0:
+        print(utf8errors, " UTF-8 incompatible passwords skipped")
 
 def testKey(key, sig, contents, headDict, quiet):
     if headDict["alg"] == "HS256":
@@ -53,18 +80,20 @@ def testKey(key, sig, contents, headDict, quiet):
         print("Algorithm is not HMAC-SHA - cannot test with this tool.")
         exit(1)
     if testSig == sig:
+        cracked = True
         if len(key) > 25:
             print("\n[+] "+key[0:25].decode('UTF-8')+"...(output trimmed) is the CORRECT key!")
         else:
             print("\n[+] "+key.decode('UTF-8')+" is the CORRECT key!")
-        exit(1)
+        return cracked
     else:
+        cracked = False
         if quiet == False:
             if len(key) > 25:
                 print("[-] "+key[0:25].decode('UTF-8')+"...(output trimmed) is not the correct key")
             else:
                 print("[-] "+key.decode('UTF-8')+" is not the correct key")
-        return
+        return cracked
 
 def buildHead(alg, headDict):
     newHead = headDict
