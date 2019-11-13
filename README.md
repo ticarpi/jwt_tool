@@ -67,6 +67,7 @@ Some options such as Verifying tokens require additional parameters/files to be 
 ---
 
 ## JWT Attack Playbook - new wiki content!  
+![playbook_logo](https://user-images.githubusercontent.com/57728093/68797806-21f25700-064d-11ea-9baa-c58fb6f75c0b.png)
 
 Head over to the [JWT Attack Playbook](https://github.com/ticarpi/jwt_tool/wiki) for a detailed run-though of what JWTs are, what they do, and a full workflow of how to thoroughly test them for vulnerabilities, common weaknesses and unintended coding errors.
 
