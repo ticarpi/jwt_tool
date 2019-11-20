@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# JWT_Tool version 1.3 (13_11_2019)
+# JWT_Tool version 1.3.1 (20_11_2019)
 # Written by ticarpi
 # Please use responsibly...
 # Software URL: https://github.com/ticarpi/jwt_tool
@@ -1005,9 +1005,11 @@ def tamperToken(paylDict, headDict, sig):
             exit(1)
     elif selection == 3:
         print("\nStripped Signature")
+        tok2 = base64.urlsafe_b64encode(json.dumps(paylDict,separators=(",",":")).encode()).decode('UTF-8').strip("=")
         checkAlgNone(headDict, tok2)
         exit(1)
     elif selection == 4:
+        tok2 = base64.urlsafe_b64encode(json.dumps(paylDict,separators=(",",":")).encode()).decode('UTF-8').strip("=")
         try:
             checkPubKey(headDict, tok2, pubKey)
         except:
