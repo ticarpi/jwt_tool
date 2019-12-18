@@ -1151,8 +1151,8 @@ def validateToken():
         contents = contents.encode()
         head = base64.b64decode(tok1 + "=" * (-len(tok1) % 4))
         payl = base64.b64decode(tok2 + "=" * (-len(tok2) % 4))
-        headDict = json.loads(head, object_pairs_hook=OrderedDict)
-        paylDict = json.loads(payl, object_pairs_hook=OrderedDict)
+        headDict = json.loads(head.decode("utf-8"), object_pairs_hook=OrderedDict)
+        paylDict = json.loads(payl.decode("utf-8"), object_pairs_hook=OrderedDict)
     except:
         print("Oh noes! Invalid token")
         exit(1)
