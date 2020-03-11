@@ -1070,7 +1070,7 @@ def tamperToken(paylDict, headDict, sig):
         newContents = base64.urlsafe_b64encode(json.dumps(headDict,separators=(",",":")).encode()).decode('UTF-8').strip("=")+"."+base64.urlsafe_b64encode(json.dumps(paylDict,separators=(",",":")).encode()).decode('UTF-8').strip("=")
         newSig, badSig, newContents = jwksEmbed(headDict, paylDict)
         print("\nYour new forged token:")
-        print("[+] "+newContents+"."+sig)
+        print("[+] "+newContents+"."+newSig)
         exit(1)
     elif selection == 7:
         print("\nPlease select an option:")
