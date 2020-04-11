@@ -1414,7 +1414,7 @@ if __name__ == '__main__':
     print("#                                                      #")
     print("#  0: Quit                                             #")
     print("########################################################")
-    print("\nPlease make a selection (1-6)")
+    print("\nPlease make a selection (1-8)")
     try:
         selection = int(input("> "))
     except:
