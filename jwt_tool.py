@@ -17,9 +17,9 @@ import argparse
 import datetime
 from collections import OrderedDict
 try:
-    from Cryptodome.Signature import PKCS1_v1_5, DSS, pss
-    from Cryptodome.Hash import SHA256, SHA384, SHA512
-    from Cryptodome.PublicKey import RSA, ECC
+    from Crypto.Signature import PKCS1_v1_5, DSS, pss
+    from Crypto.Hash import SHA256, SHA384, SHA512
+    from Crypto.PublicKey import RSA, ECC
 except:
     print("WARNING: Cryptodome libraries not imported - these are needed for asymmetric crypto signing and verifying")
     print("On most Linux systems you can run the following command to install:")
