@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# JWT_Tool version 1.3.2 (23_11_2019)
+# JWT_Tool version 1.3.3 (28_04_2020)
 # Written by ticarpi
 # Please use responsibly...
 # Software URL: https://github.com/ticarpi/jwt_tool
@@ -80,6 +80,26 @@ def crackSig(sig, contents):
         print("\n===============================\nAs your list wasn't able to crack this token you might be better off using longer dictionaries, custom dictionaries, mangling rules, or brute force attacks.\nhashcat (https://hashcat.net/hashcat/) is ideal for this as it is highly optimised for speed. Just add your JWT to a text file, then use the following syntax to give you a good start:\n\n[*] dictionary attacks: hashcat -a 0 -m 16500 jwt.txt passlist.txt\n[*] rule-based attack:  hashcat -a 0 -m 16500 jwt.txt passlist.txt -r rules/best64.rule\n[*] brute-force attack: hashcat -a 3 -m 16500 jwt.txt ?u?l?l?l?l?l?l?l -i --increment-min=6\n===============================\n")
     if utf8errors > 0:
         print(utf8errors, " UTF-8 incompatible passwords skipped")
+
+def castInput(newInput):
+    if "\"" in newInput:
+        return newInput.strip("\"")
+    elif newInput == "True" or newInput == "true":
+        return True
+    elif newInput == "False" or newInput == "false":
+        return False
+    elif newInput == "null":
+        return None
+    else:
+        try:
+            numInput = float(newInput)
+            try:
+                intInput = int(newInput)
+                return intInput
+            except:
+                return numInput
+        except:
+            return str(newInput)
 
 def testKey(key, sig, contents, headDict, quiet):
     if headDict["alg"] == "HS256":
@@ -618,7 +638,7 @@ def checkPubKey(headDict, tok2, pubKey):
     print("\n"+newTok+"."+newSig)
 
 def tamperToken(paylDict, headDict, sig):
-    print("\n====================================================================\nThis option allows you to tamper with the header, contents and \nsignature of the JWT.\n====================================================================")
+    print("\n====================================================================\nThis option allows you to tamper with the header, contents and \nsignature of the JWT.\n(Force string values in claims by enclosing in \"double quotes\"\n====================================================================")
     print("\nToken header values:")
     while True:
         i = 0
@@ -630,7 +650,10 @@ def tamperToken(paylDict, headDict, sig):
                 for subclaim in headDict[pair]:
                     print("    [+] "+subclaim+" = "+str(headDict[pair][subclaim]))
             else:
-                print("["+str(menuNum)+"] "+pair+" = "+str(headDict[pair]))
+                if type(headDict[pair]) == str:
+                    print("["+str(menuNum)+"] "+pair+" = \""+str(headDict[pair])+"\"")
+                else:
+                    print("["+str(menuNum)+"] "+pair+" = "+str(headDict[pair]))
             headList.append(pair)
             i += 1
         print("["+str(i+1)+"] *ADD A VALUE*")
@@ -670,13 +693,13 @@ def tamperToken(paylDict, headDict, sig):
                         selClaim = subList[subSel]
                         print("\nCurrent value of "+selClaim+" is: "+str(newVal[selClaim]))
                         print("Please enter new value and hit ENTER")
-                        newVal[selClaim] = input("> ")
+                        newVal[selClaim] = castInput(input("> "))
                         print()
                     elif subSel == s+1:
                         print("Please enter new Key and hit ENTER")
                         newPair = input("> ")
                         print("Please enter new value for "+newPair+" and hit ENTER")
-                        newVal[newPair] = input("> ")
+                        newVal[newPair] = castInput(input("> "))
                     elif subSel == s+2:
                         print("Please select a Key to DELETE and hit ENTER")
                         s = 0
@@ -699,14 +722,14 @@ def tamperToken(paylDict, headDict, sig):
                 print("\nCurrent value of "+headList[selection]+" is: "+str(headDict[headList[selection]]))
                 print("Please enter new value and hit ENTER")
                 newVal = input("> ")
-            headDict[headList[selection]] = newVal
+            headDict[headList[selection]] = castInput(newVal)
         elif selection == i+1:
             print("Please enter new Key and hit ENTER")
             newPair = input("> ")
             print("Please enter new value for "+newPair+" and hit ENTER")
-            newVal = input("> ")
+            newInput = input("> ")
             headList.append(newPair)
-            headDict[headList[selection]] = newVal
+            headDict[headList[selection]] = castInput(newInput)
         elif selection == i+2:
             print("Please select a Key to DELETE and hit ENTER")
             i = 0
@@ -750,18 +773,14 @@ def tamperToken(paylDict, headDict, sig):
             print("\nCurrent value of "+paylList[selection]+" is: "+str(paylDict[paylList[selection]]))
             print("Please enter new value and hit ENTER")
             newVal = input("> ")
-            paylDict[paylList[selection]] = newVal
+            paylDict[paylList[selection]] = castInput(newVal)
         elif selection == i+1:
             print("Please enter new Key and hit ENTER")
             newPair = input("> ")
             print("Please enter new value for "+newPair+" and hit ENTER")
             newVal = input("> ")
-            try:
-                newVal = int(newVal)
-            except:
-                pass
             paylList.append(newPair)
-            paylDict[paylList[selection]] = newVal
+            paylDict[paylList[selection]] = castInput(newVal)
         elif selection == i+2:
             print("Please select a Key to DELETE and hit ENTER")
             i = 0
@@ -1140,7 +1159,10 @@ def dissectPayl(paylDict, count=False):
             timeseen += 1
             comparestamps.append(claim)
         else:
-            print("["+placeholder+"] "+claim+" = "+str(paylDict[claim]))
+            if type(paylDict[claim]) == str:
+                print("["+placeholder+"] "+claim+" = \""+str(paylDict[claim])+"\"")
+            else:
+                print("["+placeholder+"] "+claim+" = "+str(paylDict[claim]))
     return comparestamps, expiredtoken
 
 def validateToken():
@@ -1185,9 +1207,15 @@ def rejigToken(headDict, paylDict, sig):
         if isinstance(headDict[claim], dict):
             print("[+] "+claim+" = JSON object:")
             for subclaim in headDict[claim]:
-                print("    [+] "+subclaim+" = "+str(headDict[claim][subclaim]))
+                if type(headDict[claim][subclaim]) == str:
+                    print("    [+] "+subclaim+" = \""+str(headDict[claim][subclaim])+"\"")
+                else:
+                    print("    [+] "+subclaim+" = "+str(headDict[claim][subclaim]))
         else:
-            print("[+] "+claim+" = "+str(headDict[claim]))
+            if type(headDict[claim]) == str:
+                print("[+] "+claim+" = \""+str(headDict[claim])+"\"")
+            else:
+                print("[+] "+claim+" = "+str(headDict[claim]))
     print("\nToken payload values:")
     comparestamps, expiredtoken = dissectPayl(paylDict)
     if len(comparestamps) >= 2:
@@ -1234,7 +1262,7 @@ if __name__ == '__main__':
     print("$$ |  $$ |$$$  / \$$$ |   $$ |       $$ |$$ |  $$ |$$ |  $$ |$$ |")
     print("\$$$$$$  |$$  /   \$$ |   $$ |       $$ |\$$$$$$  |\$$$$$$  |$$ |")
     print(" \______/ \__/     \__|   \__|$$$$$$\\__| \______/  \______/ \__|")
-    print(" Version 1.3.2                \______|                           ")
+    print(" Version 1.3.3                \______|              @ticarpi     ")
     print()
 
     parser = argparse.ArgumentParser(epilog="If you don't have a token, try this one:\neyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpbiI6InRpY2FycGkifQ.bsSwqj2c2uI9n7-ajmi3ixVGhPUiY7jO9SUn9dm15Po", formatter_class=argparse.RawTextHelpFormatter)
