@@ -617,6 +617,17 @@ def checkPubKey(headDict, tok2, pubKey):
     print("\nSet this new token as the AUTH cookie, or session/local storage data (as appropriate for the web application).\n(This will only be valid on unpatched implementations of JWT.)")
     print("\n"+newTok+"."+newSig)
 
+def getVal(promptString):
+    newVal = input(promptString)
+    try:
+        newVal = json.loads(newVal)
+    except ValueError:
+        try:
+            newVal = json.loads(newVal.replace("'", '"'))
+        except ValueError:
+            pass
+    return newVal
+
 def tamperToken(paylDict, headDict, sig):
     print("\n====================================================================\nThis option allows you to tamper with the header, contents and \nsignature of the JWT.\n====================================================================")
     print("\nToken header values:")
@@ -698,13 +709,13 @@ def tamperToken(paylDict, headDict, sig):
             else:
                 print("\nCurrent value of "+headList[selection]+" is: "+str(headDict[headList[selection]]))
                 print("Please enter new value and hit ENTER")
-                newVal = input("> ")
+                newVal = getVal("> ")
             headDict[headList[selection]] = newVal
         elif selection == i+1:
             print("Please enter new Key and hit ENTER")
             newPair = input("> ")
             print("Please enter new value for "+newPair+" and hit ENTER")
-            newVal = input("> ")
+            newVal = getVal("> ")
             headList.append(newPair)
             headDict[headList[selection]] = newVal
         elif selection == i+2:
@@ -749,17 +760,13 @@ def tamperToken(paylDict, headDict, sig):
         if selection<len(paylList) and selection>0:
             print("\nCurrent value of "+paylList[selection]+" is: "+str(paylDict[paylList[selection]]))
             print("Please enter new value and hit ENTER")
-            newVal = input("> ")
+            newVal = getVal("> ")
             paylDict[paylList[selection]] = newVal
         elif selection == i+1:
             print("Please enter new Key and hit ENTER")
             newPair = input("> ")
             print("Please enter new value for "+newPair+" and hit ENTER")
-            newVal = input("> ")
-            try:
-                newVal = int(newVal)
-            except:
-                pass
+            newVal = getVal("> ")
             paylList.append(newPair)
             paylDict[paylList[selection]] = newVal
         elif selection == i+2:
