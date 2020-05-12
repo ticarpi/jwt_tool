@@ -1,3 +1,4 @@
+![Supported Python versions](https://img.shields.io/badge/python-3.6-green.svg) [![GPLv3 license](https://img.shields.io/badge/License-GPLv3-blue.svg)](http://perso.crans.org/besson/LICENSE.html)  
 # The JSON Web Token Toolkit
 >*jwt_tool.py* is a toolkit for validating, forging and cracking JWTs (JSON Web Tokens).  
 
@@ -26,6 +27,7 @@ It may also be useful for **developers** who are using JWTs in projects, but wou
 
 ## Requirements
 This tool is written natively in **Python 3** using the common libraries, however the cryptographic funtions do require the installation of the `pycryptodomex` Python library.  
+Python 3.6 is the minimum supported version.  
 *(An older Python 2.x version is available for those who need it on the legacy branch, although this will no longer be supported or updated - as of October 2019)*
 
 ---
