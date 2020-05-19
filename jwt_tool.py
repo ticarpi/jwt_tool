@@ -82,24 +82,14 @@ def crackSig(sig, contents):
         print(utf8errors, " UTF-8 incompatible passwords skipped")
 
 def castInput(newInput):
-    if "\"" in newInput:
-        return newInput.strip("\"")
-    elif newInput == "True" or newInput == "true":
-        return True
-    elif newInput == "False" or newInput == "false":
-        return False
-    elif newInput == "null":
-        return None
-    else:
+    try:
+        newInput = json.loads(newInput)
+    except ValueError:
         try:
-            numInput = float(newInput)
-            try:
-                intInput = int(newInput)
-                return intInput
-            except:
-                return numInput
-        except:
-            return str(newInput)
+            newInput = json.loads(newInput.replace("'", "\""))
+        except ValueError:
+            pass
+    return newInput
 
 def testKey(key, sig, contents, headDict, quiet):
     if headDict["alg"] == "HS256":
@@ -636,6 +626,17 @@ def checkPubKey(headDict, tok2, pubKey):
     newSig = base64.urlsafe_b64encode(hmac.new(key.encode(),newTok.encode(),hashlib.sha256).digest()).decode('UTF-8').strip("=")
     print("\nSet this new token as the AUTH cookie, or session/local storage data (as appropriate for the web application).\n(This will only be valid on unpatched implementations of JWT.)")
     print("\n"+newTok+"."+newSig)
+
+def getVal(promptString):
+    newVal = input(promptString)
+    try:
+        newVal = json.loads(newVal)
+    except ValueError:
+        try:
+            newVal = json.loads(newVal.replace("'", '"'))
+        except ValueError:
+            pass
+    return newVal
 
 def tamperToken(paylDict, headDict, sig):
     print("\n====================================================================\nThis option allows you to tamper with the header, contents and \nsignature of the JWT.\n(Force string values in claims by enclosing in \"double quotes\"\n====================================================================")
