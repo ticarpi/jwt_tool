@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# JWT_Tool version 1.3.3 (28_04_2020)
+# JWT_Tool version 1.3.4 (19_05_2020)
 # Written by ticarpi
 # Please use responsibly...
 # Software URL: https://github.com/ticarpi/jwt_tool
@@ -82,14 +82,65 @@ def crackSig(sig, contents):
         print(utf8errors, " UTF-8 incompatible passwords skipped")
 
 def castInput(newInput):
-    try:
-        newInput = json.loads(newInput)
-    except ValueError:
+    if newInput == None:
+        return newInput
+    elif type(newInput) == bool or type(newInput) == int:
+        return newInput
+    else:
         try:
-            newInput = json.loads(newInput.replace("'", "\""))
+            newInput = json.loads(newInput)
         except ValueError:
-            pass
+            try:
+                newInput = json.loads(newInput.replace("'", "\""))
+            except ValueError:
+                pass
     return newInput
+
+def buildSubclaim(newVal, claimList, selection):
+    while True:
+        subList = [0]
+        s = 0
+        for subclaim in newVal:
+            subNum = s+1
+            print("["+str(subNum)+"] "+subclaim+" = "+str(newVal[subclaim]))
+            s += 1
+            subList.append(subclaim)
+        print("["+str(s+1)+"] *ADD A VALUE*")
+        print("["+str(s+2)+"] *DELETE A VALUE*")
+        print("[0] Continue to next step")
+        try:
+            subSel = int(input("> "))
+        except:
+            print("Invalid selection")
+            exit(1)
+        if subSel<=len(newVal) and subSel>0:
+            selClaim = subList[subSel]
+            print("\nCurrent value of "+selClaim+" is: "+str(newVal[selClaim]))
+            print("Please enter new value and hit ENTER")
+            newVal[selClaim] = castInput(input("> "))
+            print()
+        elif subSel == s+1:
+            print("Please enter new Key and hit ENTER")
+            newPair = input("> ")
+            print("Please enter new value for "+newPair+" and hit ENTER")
+            newVal[newPair] = castInput(input("> "))
+        elif subSel == s+2:
+            print("Please select a Key to DELETE and hit ENTER")
+            s = 0
+            for subclaim in newVal:
+                subNum = s+1
+                print("["+str(subNum)+"] "+subclaim+" = "+str(newVal[subclaim]))
+                subList.append(subclaim)
+                s += 1
+            try:
+                selSub = int(input("> "))
+            except:
+                print("Invalid selection")
+                exit(1)
+            delSub = subList[selSub]
+            del newVal[delSub]
+        elif subSel == 0:
+            return newVal
 
 def testKey(key, sig, contents, headDict, quiet):
     if headDict["alg"] == "HS256":
@@ -673,57 +724,13 @@ def tamperToken(paylDict, headDict, sig):
                 newVal = OrderedDict()
                 for subclaim in headDict[headList[selection]]:
                     newVal[subclaim] = headDict[pair][subclaim]
-                while True:
-                    subList = [0]
-                    s = 0
-                    # for subclaim in headDict[headList[selection]]:
-                    for subclaim in newVal:
-                        subNum = s+1
-                        print("["+str(subNum)+"] "+subclaim+" = "+str(newVal[subclaim]))
-                        s += 1
-                        subList.append(subclaim)
-                    print("["+str(s+1)+"] *ADD A VALUE*")
-                    print("["+str(s+2)+"] *DELETE A VALUE*")
-                    print("[0] Continue to next step")
-                    try:
-                        subSel = int(input("> "))
-                    except:
-                        print("Invalid selection")
-                        exit(1)
-                    if subSel<=len(newVal) and subSel>0:
-                        selClaim = subList[subSel]
-                        print("\nCurrent value of "+selClaim+" is: "+str(newVal[selClaim]))
-                        print("Please enter new value and hit ENTER")
-                        newVal[selClaim] = castInput(input("> "))
-                        print()
-                    elif subSel == s+1:
-                        print("Please enter new Key and hit ENTER")
-                        newPair = input("> ")
-                        print("Please enter new value for "+newPair+" and hit ENTER")
-                        newVal[newPair] = castInput(input("> "))
-                    elif subSel == s+2:
-                        print("Please select a Key to DELETE and hit ENTER")
-                        s = 0
-                        for subclaim in newVal:
-                            subNum = s+1
-                            print("["+str(subNum)+"] "+subclaim+" = "+str(newVal[subclaim]))
-                            subList.append(subclaim)
-                            s += 1
-                        try:
-                            selSub = int(input("> "))
-                        except:
-                            print("Invalid selection")
-                            exit(1)
-                        delSub = subList[selSub]
-                        del newVal[delSub]
-                    elif subSel == 0:
-                        print()
-                        break
+                newVal = buildSubclaim(newVal, headList, selection)
+                headDict[headList[selection]] = newVal
             else:
                 print("\nCurrent value of "+headList[selection]+" is: "+str(headDict[headList[selection]]))
                 print("Please enter new value and hit ENTER")
                 newVal = input("> ")
-            headDict[headList[selection]] = castInput(newVal)
+                headDict[headList[selection]] = castInput(newVal)
         elif selection == i+1:
             print("Please enter new Key and hit ENTER")
             newPair = input("> ")
@@ -771,10 +778,19 @@ def tamperToken(paylDict, headDict, sig):
             print("Invalid selection")
             exit(1)
         if selection<len(paylList) and selection>0:
-            print("\nCurrent value of "+paylList[selection]+" is: "+str(paylDict[paylList[selection]]))
-            print("Please enter new value and hit ENTER")
-            newVal = input("> ")
-            paylDict[paylList[selection]] = castInput(newVal)
+            if isinstance(paylDict[paylList[selection]], dict):
+                print("\nPlease select a sub-field number for the "+pair+" claim:\n(or 0 to Continue)")
+                newVal = OrderedDict()
+                for subclaim in paylDict[paylList[selection]]:
+                    print(subclaim)
+                    newVal[subclaim] = paylDict[pair][subclaim]
+                newVal = buildSubclaim(newVal, paylList, selection)
+                paylDict[paylList[selection]] = newVal
+            else:
+                print("\nCurrent value of "+paylList[selection]+" is: "+str(paylDict[paylList[selection]]))
+                print("Please enter new value and hit ENTER")
+                newVal = input("> ")
+                paylDict[paylList[selection]] = castInput(newVal)
         elif selection == i+1:
             print("Please enter new Key and hit ENTER")
             newPair = input("> ")
@@ -1159,6 +1175,19 @@ def dissectPayl(paylDict, count=False):
             print("["+placeholder+"] "+claim+" = "+str(paylDict[claim])+"    ==> TIMESTAMP = "+timestamp.strftime('%Y-%m-%d %H:%M:%S')+" (UTC)")
             timeseen += 1
             comparestamps.append(claim)
+        elif isinstance(paylDict[claim], dict):
+                print("["+placeholder+"] "+claim+" = JSON object:")
+                for subclaim in paylDict[claim]:
+                    if paylDict[claim][subclaim] == None:
+                        print("    [+] "+subclaim+" = null")
+                    elif paylDict[claim][subclaim] == True:
+                        print("    [+] "+subclaim+" = true")
+                    elif paylDict[claim][subclaim] == False:
+                        print("    [+] "+subclaim+" = false")
+                    elif type(castInput(paylDict[claim][subclaim])) == str:
+                        print("    [+] "+subclaim+" = \""+str(paylDict[claim][subclaim])+"\"")
+                    else:
+                        print("    [+] "+subclaim+" = "+str(paylDict[claim][subclaim]))
         else:
             if type(paylDict[claim]) == str:
                 print("["+placeholder+"] "+claim+" = \""+str(paylDict[claim])+"\"")
@@ -1169,39 +1198,15 @@ def dissectPayl(paylDict, count=False):
 def validateToken():
     try:
         tok1, tok2, sig = jwt.split(".",3)
-    except:
-        print("[-] Invalid token:\nNot 3 parts (header.payload.signature)")
-        exit(1)
-    contents = tok1+"."+tok2
-    contents = contents.encode()
-    try:
-        head = base64.b64decode(tok1 + "=" * (-len(tok1) % 4))
-    except:
-        print("[-] Invalid token:\nCould not base64-decode header - incorrect formatting")
-        exit(1)
-    try:
-        payl = base64.b64decode(tok2 + "=" * (-len(tok2) % 4))
-    except:
-        print("[-] Invalid token:\nCould not base64-decode payload - incorrect formatting")
-        exit(1)
-    try:
-        headDict = json.loads(head, object_pairs_hook=OrderedDict)
-    except:
-        print("[-] Invalid token:\nHeader not valid JSON format")
-        exit(1)
-    if payl.decode() == "":
-        print("Payload is blank")
-        paylDict = {}
-    else:
-        try:
-            paylDict = json.loads(payl, object_pairs_hook=OrderedDict)
-        except:
-            print("[-] Invalid token:\nPayload not valid JSON format")
-            exit(1)
-    try:
         sig = base64.urlsafe_b64encode(base64.urlsafe_b64decode(sig + "=" * (-len(sig) % 4))).decode('UTF-8').strip("=")
+        contents = tok1+"."+tok2
+        contents = contents.encode()
+        head = base64.b64decode(tok1 + "=" * (-len(tok1) % 4))
+        payl = base64.b64decode(tok2 + "=" * (-len(tok2) % 4))
+        headDict = json.loads(head, object_pairs_hook=OrderedDict)
+        paylDict = json.loads(payl, object_pairs_hook=OrderedDict)
     except:
-        print("[-] Invalid token:\nCould not base64-decode signature - incorrect formatting")
+        print("Oh noes! Invalid token")
         exit(1)
     return headDict, paylDict, sig, contents
 
@@ -1232,7 +1237,13 @@ def rejigToken(headDict, paylDict, sig):
         if isinstance(headDict[claim], dict):
             print("[+] "+claim+" = JSON object:")
             for subclaim in headDict[claim]:
-                if type(headDict[claim][subclaim]) == str:
+                if headDict[claim][subclaim] == None:
+                    print("    [+] "+subclaim+" = null")
+                elif headDict[claim][subclaim] == True:
+                    print("    [+] "+subclaim+" = true")
+                elif headDict[claim][subclaim] == False:
+                    print("    [+] "+subclaim+" = false")
+                elif type(headDict[claim][subclaim]) == str:
                     print("    [+] "+subclaim+" = \""+str(headDict[claim][subclaim])+"\"")
                 else:
                     print("    [+] "+subclaim+" = "+str(headDict[claim][subclaim]))
@@ -1287,7 +1298,7 @@ if __name__ == '__main__':
     print("$$ |  $$ |$$$  / \$$$ |   $$ |       $$ |$$ |  $$ |$$ |  $$ |$$ |")
     print("\$$$$$$  |$$  /   \$$ |   $$ |       $$ |\$$$$$$  |\$$$$$$  |$$ |")
     print(" \______/ \__/     \__|   \__|$$$$$$\\__| \______/  \______/ \__|")
-    print(" Version 1.3.3                \______|              @ticarpi     ")
+    print(" Version 1.3.4                \______|              @ticarpi     ")
     print()
 
     parser = argparse.ArgumentParser(epilog="If you don't have a token, try this one:\neyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpbiI6InRpY2FycGkifQ.bsSwqj2c2uI9n7-ajmi3ixVGhPUiY7jO9SUn9dm15Po", formatter_class=argparse.RawTextHelpFormatter)
