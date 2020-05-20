@@ -1198,15 +1198,39 @@ def dissectPayl(paylDict, count=False):
 def validateToken():
     try:
         tok1, tok2, sig = jwt.split(".",3)
-        sig = base64.urlsafe_b64encode(base64.urlsafe_b64decode(sig + "=" * (-len(sig) % 4))).decode('UTF-8').strip("=")
-        contents = tok1+"."+tok2
-        contents = contents.encode()
-        head = base64.b64decode(tok1 + "=" * (-len(tok1) % 4))
-        payl = base64.b64decode(tok2 + "=" * (-len(tok2) % 4))
-        headDict = json.loads(head, object_pairs_hook=OrderedDict)
-        paylDict = json.loads(payl, object_pairs_hook=OrderedDict)
     except:
-        print("Oh noes! Invalid token")
+        print("[-] Invalid token:\nNot 3 parts (header.payload.signature)")
+        exit(1)
+    contents = tok1+"."+tok2
+    contents = contents.encode()
+    try:
+        head = base64.b64decode(tok1 + "=" * (-len(tok1) % 4))
+    except:
+        print("[-] Invalid token:\nCould not base64-decode header - incorrect formatting")
+        exit(1)
+    try:
+        payl = base64.b64decode(tok2 + "=" * (-len(tok2) % 4))
+    except:
+        print("[-] Invalid token:\nCould not base64-decode payload - incorrect formatting")
+        exit(1)
+    try:
+        headDict = json.loads(head, object_pairs_hook=OrderedDict)
+    except:
+        print("[-] Invalid token:\nHeader not valid JSON format")
+        exit(1)
+    if payl.decode() == "":
+        print("Payload is blank")
+        paylDict = {}
+    else:
+        try:
+            paylDict = json.loads(payl, object_pairs_hook=OrderedDict)
+        except:
+            print("[-] Invalid token:\nPayload not valid JSON format")
+            exit(1)
+    try:
+        sig = base64.urlsafe_b64encode(base64.urlsafe_b64decode(sig + "=" * (-len(sig) % 4))).decode('UTF-8').strip("=")
+    except:
+        print("[-] Invalid token:\nCould not base64-decode signature - incorrect formatting")
         exit(1)
     return headDict, paylDict, sig, contents
 
