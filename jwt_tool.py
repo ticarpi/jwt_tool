@@ -1204,12 +1204,12 @@ def validateToken():
     contents = tok1+"."+tok2
     contents = contents.encode()
     try:
-        head = base64.b64decode(tok1 + "=" * (-len(tok1) % 4))
+        head = base64.urlsafe_b64decode(tok1 + "=" * (-len(tok1) % 4))
     except:
         print("[-] Invalid token:\nCould not base64-decode header - incorrect formatting")
         exit(1)
     try:
-        payl = base64.b64decode(tok2 + "=" * (-len(tok2) % 4))
+        payl = base64.urlsafe_b64decode(tok2 + "=" * (-len(tok2) % 4))
     except:
         print("[-] Invalid token:\nCould not base64-decode payload - incorrect formatting")
         exit(1)
