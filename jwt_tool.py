@@ -88,7 +88,7 @@ def castInput(newInput):
         return newInput
     else:
         try:
-            newInput = json.loads(newInput)
+            newInput = json.dumps(newInput)
         except ValueError:
             try:
                 newInput = json.loads(newInput.replace("'", "\""))
