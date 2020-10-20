@@ -77,6 +77,41 @@ Head over to the [JWT Attack Playbook](https://github.com/ticarpi/jwt_tool/wiki)
 
 ## Version History/Changelog
 
+### v1.3.5
+* October 2020
+* Python 3.x
+* [+] Enabled reading of multiple-level nesting of JSON objects in claims
+* Fixed function names and text referencing 'key length' where it should have been 'hash length'
+
+### v1.3.4
+* May 2020
+* Python 3.x
+* [+] Updated Tamper mode to allow users to input all JSON data types when editing or creating new claims
+  * To specify a new JSON object just create a new empty object with curly braces: {}
+  * To create a JSON array add it in directly: ['item1','item2']
+* [+] General streamlining and bug squashing
+* Fixed missing urlsafe_b64 decoding in validateToken()
+
+### v1.3.3
+* April 2020
+* Python 3.x
+* [+] Changed Tamper mode to allow users to specify data type when editing or creating new claims
+  * To specify number, true, false, null just type the relevant value
+  * To force a string surround the input with double quotes
+  * e.g. to include a number as a text string enclose in quotes, or leave without if you want it as a number data type
+
+### v1.3.2
+* November 2019
+* Python 3.x
+* [+] Added ability to provide Private Key for signing in Tamper mode, or via cmdline (`jwt_tool.py [jwt] -S -u URL -pr PRIVKEY.pem`)
+* [+] JWKS exported as a file as well as displayed to screen
+* [*] Bonus tip - you can verify the JWKS with JWKS Check option ('jwt_tool.py [jwt] -J -jw JWKSFILE.json')
+
+### v1.3.1
+* November 2019
+* Python 3.x
+* [+] Fixed tampering when signing with [3] and [4]
+
 ### v1.3
 * November 2019
 * Python 3.x

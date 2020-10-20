@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# JWT_Tool version 1.3.4 (19_05_2020)
+# JWT_Tool version 1.3.5 (16_10_2020)
 # Written by ticarpi
 # Please use responsibly...
 # Software URL: https://github.com/ticarpi/jwt_tool
@@ -88,10 +88,10 @@ def castInput(newInput):
         return newInput
     else:
         try:
-            newInput = json.loads(newInput)
+            newInput = json.dumps(newInput)
         except ValueError:
             try:
-                newInput = json.loads(newInput.replace("'", "\""))
+                newInput = json.dumps(newInput.replace("'", "\""))
             except ValueError:
                 pass
     return newInput
@@ -186,14 +186,14 @@ def newECKeyPair():
     privKey = new_key.export_key(format="PEM")
     return pubKey, privKey
 
-def signToken(headDict, paylDict, key, keyLength):
+def signToken(headDict, paylDict, key, hashLength):
     newHead = headDict
-    newHead["alg"] = "HS"+str(keyLength)
-    if keyLength == 384:
+    newHead["alg"] = "HS"+str(hashLength)
+    if hashLength == 384:
         newContents = base64.urlsafe_b64encode(json.dumps(newHead,separators=(",",":")).encode()).decode('UTF-8').strip("=")+"."+base64.urlsafe_b64encode(json.dumps(paylDict,separators=(",",":")).encode()).decode('UTF-8').strip("=")
         newSig = base64.urlsafe_b64encode(hmac.new(key.encode(),newContents.encode(),hashlib.sha384).digest()).decode('UTF-8').strip("=")
         badSig = base64.b64encode(hmac.new(key.encode(),newContents.encode(),hashlib.sha384).digest()).decode('UTF-8').strip("=")
-    elif keyLength == 512:
+    elif hashLength == 512:
         newContents = base64.urlsafe_b64encode(json.dumps(newHead,separators=(",",":")).encode()).decode('UTF-8').strip("=")+"."+base64.urlsafe_b64encode(json.dumps(paylDict,separators=(",",":")).encode()).decode('UTF-8').strip("=")
         newSig = base64.urlsafe_b64encode(hmac.new(key.encode(),newContents.encode(),hashlib.sha512).digest()).decode('UTF-8').strip("=")
         badSig = base64.b64encode(hmac.new(key.encode(),newContents.encode(),hashlib.sha512).digest()).decode('UTF-8').strip("=")
@@ -276,20 +276,20 @@ def jwksEmbed(headDict, paylDict):
     badSig = base64.b64encode(signature).decode('UTF-8').strip("=")
     return newSig, badSig, newContents.decode('UTF-8')
 
-def signTokenRSA(headDict, paylDict, privKey, keyLength):
+def signTokenRSA(headDict, paylDict, privKey, hashLength):
     newHead = headDict
-    newHead["alg"] = "RS"+str(keyLength)
+    newHead["alg"] = "RS"+str(hashLength)
     key = RSA.importKey(open(privKey).read())
     newContents = base64.urlsafe_b64encode(json.dumps(newHead,separators=(",",":")).encode()).decode('UTF-8').strip("=")+"."+base64.urlsafe_b64encode(json.dumps(paylDict,separators=(",",":")).encode()).decode('UTF-8').strip("=")
     newContents = newContents.encode('UTF-8')
-    if keyLength == 256:
+    if hashLength == 256:
         h = SHA256.new(newContents)
-    elif keyLength == 384:
+    elif hashLength == 384:
         h = SHA384.new(newContents)
-    elif keyLength == 512:
+    elif hashLength == 512:
         h = SHA512.new(newContents)
     else:
-        print("Invalid RSA key length")
+        print("Invalid RSA hash length")
         exit(1)
     signer = PKCS1_v1_5.new(key)
     try:
@@ -301,20 +301,20 @@ def signTokenRSA(headDict, paylDict, privKey, keyLength):
     badSig = base64.b64encode(signature).decode('UTF-8').strip("=")
     return newSig, badSig, newContents.decode('UTF-8')
 
-def signTokenEC(headDict, paylDict, privKey, keyLength):
+def signTokenEC(headDict, paylDict, privKey, hashLength):
     newHead = headDict
-    newHead["alg"] = "ES"+str(keyLength)
+    newHead["alg"] = "ES"+str(hashLength)
     key = ECC.import_key(open(privKey).read())
     newContents = base64.urlsafe_b64encode(json.dumps(newHead,separators=(",",":")).encode()).decode('UTF-8').strip("=")+"."+base64.urlsafe_b64encode(json.dumps(paylDict,separators=(",",":")).encode()).decode('UTF-8').strip("=")
     newContents = newContents.encode('UTF-8')
-    if keyLength == 256:
+    if hashLength == 256:
         h = SHA256.new(newContents)
-    elif keyLength == 384:
+    elif hashLength == 384:
         h = SHA384.new(newContents)
-    elif keyLength == 512:
+    elif hashLength == 512:
         h = SHA512.new(newContents)
     else:
-        print("Invalid RSA key length")
+        print("Invalid RSA hash length")
         exit(1)
     signer = DSS.new(key, 'fips-186-3')
     try:
@@ -326,17 +326,17 @@ def signTokenEC(headDict, paylDict, privKey, keyLength):
     badSig = base64.b64encode(signature).decode('UTF-8').strip("=")
     return newSig, badSig, newContents.decode('UTF-8')
 
-def signTokenPSS(headDict, paylDict, privKey, keyLength):
+def signTokenPSS(headDict, paylDict, privKey, hashLength):
     newHead = headDict
-    newHead["alg"] = "PS"+str(keyLength)
+    newHead["alg"] = "PS"+str(hashLength)
     key = RSA.importKey(open(privKey).read())
     newContents = base64.urlsafe_b64encode(json.dumps(newHead,separators=(",",":")).encode()).decode('UTF-8').strip("=")+"."+base64.urlsafe_b64encode(json.dumps(paylDict,separators=(",",":")).encode()).decode('UTF-8').strip("=")
     newContents = newContents.encode('UTF-8')
-    if keyLength == 256:
+    if hashLength == 256:
         h = SHA256.new(newContents)
-    elif keyLength == 384:
+    elif hashLength == 384:
         h = SHA384.new(newContents)
-    elif keyLength == 512:
+    elif hashLength == 512:
         h = SHA512.new(newContents)
     else:
         print("Invalid RSA key length")
@@ -875,7 +875,7 @@ def tamperToken(paylDict, headDict, sig):
     if selection == 1:
         print("\nPlease enter the known key:")
         key = input("> ")
-        print("\nPlease enter the keylength:")
+        print("\nPlease enter the hash length:")
         print("[1] HMAC-SHA256")
         print("[2] HMAC-SHA384")
         print("[3] HMAC-SHA512")
@@ -885,15 +885,15 @@ def tamperToken(paylDict, headDict, sig):
             print("Invalid selection")
             exit(1)
         if selLength == 1:
-            keyLength = 256
+            hashLength = 256
         elif selLength == 2:
-            keyLength = 384
+            hashLength = 384
         elif selLength == 3:
-            keyLength = 512
+            hashLength = 512
         else:
             print("Invalid selection")
             exit(1)
-        newSig, badSig, newContents = signToken(headDict, paylDict, key, keyLength)
+        newSig, badSig, newContents = signToken(headDict, paylDict, key, hashLength)
         print("\nYour new forged token:")
         print("[+] URL safe: "+newContents+"."+newSig)
         print("[+] Standard: "+newContents+"."+badSig+"\n")
@@ -933,7 +933,7 @@ def tamperToken(paylDict, headDict, sig):
             else:
                 print("Invalid selection")
                 exit(1)
-            print("\nPlease enter the keylength:")
+            print("\nPlease enter the hash length:")
             print("[1] RSA-256")
             print("[2] RSA-384")
             print("[3] RSA-512")
@@ -943,15 +943,15 @@ def tamperToken(paylDict, headDict, sig):
                 print("Invalid selection")
                 exit(1)
             if selLength == 1:
-                keyLength = 256
+                hashLength = 256
             elif selLength == 2:
-                keyLength = 384
+                hashLength = 384
             elif selLength == 3:
-                keyLength = 512
+                hashLength = 512
             else:
                 print("Invalid selection")
                 exit(1)
-            newSig, badSig, newContents = signTokenRSA(headDict, paylDict, privKeyName, keyLength)
+            newSig, badSig, newContents = signTokenRSA(headDict, paylDict, privKeyName, hashLength)
             print("\nYour new forged token:")
             print("[+] URL safe: "+newContents+"."+newSig)
             print("[+] Standard: "+newContents+"."+badSig+"\n")
@@ -981,7 +981,7 @@ def tamperToken(paylDict, headDict, sig):
             else:
                 print("Invalid selection")
                 exit(1)
-            print("\nPlease enter the keylength:")
+            print("\nPlease enter the hash length:")
             print("[1] ECDSA-256")
             print("[2] ECDSA-384")
             print("[3] ECDSA-512")
@@ -991,15 +991,15 @@ def tamperToken(paylDict, headDict, sig):
                 print("Invalid selection")
                 exit(1)
             if selLength == 1:
-                keyLength = 256
+                hashLength = 256
             elif selLength == 2:
-                keyLength = 384
+                hashLength = 384
             elif selLength == 3:
-                keyLength = 512
+                hashLength = 512
             else:
                 print("Invalid selection")
                 exit(1)
-            newSig, badSig, newContents = signTokenEC(headDict, paylDict, privKeyName, keyLength)
+            newSig, badSig, newContents = signTokenEC(headDict, paylDict, privKeyName, hashLength)
             print("\nYour new forged token:")
             print("[+] URL safe: "+newContents+"."+newSig)
             print("[+] Standard: "+newContents+"."+badSig+"\n")
@@ -1029,7 +1029,7 @@ def tamperToken(paylDict, headDict, sig):
             else:
                 print("Invalid selection")
                 exit(1)
-            print("\nPlease enter the keylength:")
+            print("\nPlease enter the hash length:")
             print("[1] RSA-256")
             print("[2] RSA-384")
             print("[3] RSA-512")
@@ -1039,15 +1039,15 @@ def tamperToken(paylDict, headDict, sig):
                 print("Invalid selection")
                 exit(1)
             if selLength == 1:
-                keyLength = 256
+                hashLength = 256
             elif selLength == 2:
-                keyLength = 384
+                hashLength = 384
             elif selLength == 3:
-                keyLength = 512
+                hashLength = 512
             else:
                 print("Invalid selection")
                 exit(1)
-            newSig, badSig, newContents = signTokenPSS(headDict, paylDict, privKeyName, keyLength)
+            newSig, badSig, newContents = signTokenPSS(headDict, paylDict, privKeyName, hashLength)
             print("\nYour new forged token:")
             print("[+] URL safe: "+newContents+"."+newSig)
             print("[+] Standard: "+newContents+"."+badSig+"\n")
@@ -1079,7 +1079,7 @@ def tamperToken(paylDict, headDict, sig):
             print("Could not load file")
             exit(1)
         print("File loaded: "+keyFile)
-        print("\nPlease enter the keylength:")
+        print("\nPlease enter the hash length:")
         print("[1] HMAC-SHA256")
         print("[2] HMAC-SHA384")
         print("[3] HMAC-SHA512")
@@ -1089,15 +1089,15 @@ def tamperToken(paylDict, headDict, sig):
             print("Invalid selection")
             exit(1)
         if selLength == 1:
-            keyLength = 256
+            hashLength = 256
         elif selLength == 2:
-            keyLength = 384
+            hashLength = 384
         elif selLength == 3:
-            keyLength = 512
+            hashLength = 512
         else:
             print("Invalid selection")
             exit(1)
-        newSig, badSig, newContents = signToken(headDict, paylDict, key1, keyLength)
+        newSig, badSig, newContents = signToken(headDict, paylDict, key1, hashLength)
         print("\nYour new forged token:")
         print("[+] URL safe: "+newContents+"."+newSig)
         print("[+] Standard: "+newContents+"."+badSig+"\n")
@@ -1322,7 +1322,7 @@ if __name__ == '__main__':
     print("$$ |  $$ |$$$  / \$$$ |   $$ |       $$ |$$ |  $$ |$$ |  $$ |$$ |")
     print("\$$$$$$  |$$  /   \$$ |   $$ |       $$ |\$$$$$$  |\$$$$$$  |$$ |")
     print(" \______/ \__/     \__|   \__|$$$$$$\\__| \______/  \______/ \__|")
-    print(" Version 1.3.4                \______|              @ticarpi     ")
+    print(" Version 1.3.5                \______|              @ticarpi     ")
     print()
 
     parser = argparse.ArgumentParser(epilog="If you don't have a token, try this one:\neyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpbiI6InRpY2FycGkifQ.bsSwqj2c2uI9n7-ajmi3ixVGhPUiY7jO9SUn9dm15Po", formatter_class=argparse.RawTextHelpFormatter)
