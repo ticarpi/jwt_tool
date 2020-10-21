@@ -665,7 +665,7 @@ def checkAlgNone(headDict, tok2):
 def checkPubKey(headDict, tok2, pubKey):
     print("\n====================================================================\nThis option takes an available Public Key (the SSL certificate from \na webserver, for example?) and switches the RSA-signed \n(RS256/RS384/RS512) JWT that uses the Public Key as its 'secret'.\n====================================================================")
     try:
-        key = open(pubKey).read()
+        key = RSA.importKey(open(pubKey).read()).exportKey().decode() + "\n"
         print("File loaded: "+pubKey)
     except:
         print("[-] File not found")
