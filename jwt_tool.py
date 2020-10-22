@@ -1703,6 +1703,8 @@ if __name__ == '__main__':
     else:
         print("No config file yet created.\nRunning config setup.")
         createConfig()
+    with open('null.txt', 'w') as nullfile:
+        pass
     findJWT = ""
     if args.targeturl:
         if args.cookies or args.headers:
