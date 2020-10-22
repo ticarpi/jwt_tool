@@ -1,0 +1,6 @@
+/oauth2/v1/keys
+/jwks.json
+/.well-known/jwks.json
+/.well-known/jwks_uri
+/.well-known/openid-configuration/jwks
+/openid/connect/jwks.json

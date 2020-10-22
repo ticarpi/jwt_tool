@@ -1,0 +1,5 @@
+unzip jwt_tool_v2_BETA.zip
+cd jwt_tool_v2_BETA
+sudo apt install python3-pip
+python3 -m pip install termcolor cprint pycryptodomex requests
+chmod +x jwt_tool.py

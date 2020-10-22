@@ -1,14 +1,15 @@
-![Supported Python versions](https://img.shields.io/badge/python-3.6-green.svg) [![GPLv3 license](https://img.shields.io/badge/License-GPLv3-blue.svg)](http://perso.crans.org/besson/LICENSE.html)  
-# The JSON Web Token Toolkit
->*jwt_tool.py* is a toolkit for validating, forging and cracking JWTs (JSON Web Tokens).  
+# The JSON Web Token Toolkit v2
+>*jwt_tool.py* is a toolkit for validating, forging, scanning and tampering JWTs (JSON Web Tokens).  
 
 
 Its functionality includes:
 * Checking the validity of a token
 * Testing for known exploits:
-  * (CVE-2015-2951) The ***alg=none*** signature-bypass vulnerability (CVE-2015-2951)
+  * (CVE-2015-2951) The ***alg=none*** signature-bypass vulnerability
   * (CVE-2016-10555) The ***RS/HS256*** public key mismatch vulnerability
   * (CVE-2018-0114) ***Key injection*** vulnerability
+* Scanning for misconfigurations or known weaknesses
+* Fuzzing claim values to provoke unexpected behaviours
 * Testing the validity of a secret/key file/Public Key/JWKS key
 * Identifying ***weak keys*** via a High-speed ***Dictionary Attack***
 * Forging new token header and payload contents and creating a new signature with the **key** or via another attack method
@@ -26,45 +27,90 @@ It may also be useful for **developers** who are using JWTs in projects, but wou
 ---
 
 ## Requirements
-This tool is written natively in **Python 3** using the common libraries, however the cryptographic funtions do require the installation of the `pycryptodomex` Python library.  
-Python 3.6 is the minimum supported version.  
-*(An older Python 2.x version is available for those who need it on the legacy branch, although this will no longer be supported or updated - as of October 2019)*
+This tool is written natively in **Python 3** (version 3.6+) using the common libraries, however various cryptographic funtions (and general prettiness/readability) do require the installation of a few common Python libraries.  
+*(An older Python 2.x version of this tool is available on the legacy branch for those who need it, although this is no longer be supported or updated)*
 
 ---
 
 ## Installation
-Installation is just a case of downloading the `jwt_tool.py` file (or `git clone`ing the repo).  
+Installation is just a case of downloading the `jwt_tool.py` file (or `git clone` the repo).  
 (`chmod` the file too if you want to add it to your *$PATH* and call it from anywhere.)
 
 `$ git clone https://github.com/ticarpi/jwt_tool`  
-`$ pip3 install pycryptodomex`  
+`$ python3 -m pip install termcolor cprint pycryptodomex requests`  
 
 ---
 
 ## Usage
-The first argument should be the JWT itself. Providing no additional arguments will take you to the interactive menu.
+The first argument should be the JWT itself (*unless providing this in a header or cookie value*). Providing no additional arguments will show you the decoded token values for review.  
 `$ python3 jwt_tool.py <JWT>`  
 
 The toolkit will validate the token and list the header and payload values.  
-It will then provide a menu of your available options.  
-
-Input is in either standard or url-safe JWT format, and the resulting tokens are output in both formats for your ease of use.
 
 ### Additional arguments
 The many additional arguments will take you straight to the appropriate function and return you a token ready to use in your tests.  
-For example, to test the alg:none exploit run the following:  
-`$ python3 jwt_tool.py eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpbiI6InRpY2FycGkifQ.aqNCvShlNT9jBFTPBpHDbt2gBB1MyHiisSDdp8SQvgw -A`
+For example, to tamper the existing token run the following:  
+`$ python3 jwt_tool.py eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpbiI6InRpY2FycGkifQ.aqNCvShlNT9jBFTPBpHDbt2gBB1MyHiisSDdp8SQvgw -T`  
+
+Many options need additional values to set options.  
+For example, to run a particular type of exploit you need to choose the eXploit (-X) option and select the vulnerability (here using "a" for the *alg:none* exploit):  
+`$ python3 jwt_tool.py eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpbiI6InRpY2FycGkifQ.aqNCvShlNT9jBFTPBpHDbt2gBB1MyHiisSDdp8SQvgw -X a`
 
 ### Extra parameters
-Some options such as Verifying tokens require additional parameters/files to be provided:  
+Some options such as Verifying tokens require additional parameters/files to be provided (here providing the Public Key in PEM format):  
 `$ python3 jwt_tool.py eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpbiI6InRpY2FycGkifQ.aqNCvShlNT9jBFTPBpHDbt2gBB1MyHiisSDdp8SQvgw -V -pk public.pem`  
+
+### Sending tokens to a web application
+All modes now allow for sending the token directly to an application.  
+You need to specify:  
+* target URL (-t)
+* a request header (-rh) or request cookies (-rc) that are needed by the application (***at least one must contain the token***)
+* (optional) any POST data (where the request is a POST)
+* (optional) any additional jwt_tool options, such as modes or tampering/injection options  
+* (optional) a *canary value* (-cv) - a text value you expect to see in a successful use of the token (e.g. "Welcome, ticarpi")  
+An example request might look like this (using scanning mode for forced-errors):  
+`$ python3 jwt_tool.py -t https://www.ticarpi.com/ -rc "jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpbiI6InRpY2FycGkifQ.bsSwqj2c2uI9n7-ajmi3ixVGhPUiY7jO9SUn9dm15Po;anothercookie=test" -rh "Origin: null" -cv "Welcome" -M er` 
+
+Various responses from the request are displayed:  
+* Response code
+* Response size
+* Unique request tracking ID (for use with logging)
+* Mode/options used
+
+---
+
+## Common Workflow
+
+Here is a quick run-through of a basic assessment of a JWT implementation. If no success with these options then dig deeper into other modes and options to hunt for new vulnerabilities (or zero-days!).  
+
+### Recon:  
+Read the token value to get a feel for the claims/values expected in the application:  
+`$ python3 jwt_tool.py eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpbiI6InRpY2FycGkifQ.aqNCvShlNT9jBFTPBpHDbt2gBB1MyHiisSDdp8SQvgw`  
+
+### Scanning:
+Run a ***Playbook Scan*** using the provided token directly against the application to hunt for common misconfigurations:  
+`$ python3 jwt_tool.py -t https://www.ticarpi.com/ -rc "jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpbiI6InRpY2FycGkifQ.bsSwqj2c2uI9n7-ajmi3ixVGhPUiY7jO9SUn9dm15Po;anothercookie=test" -M pb`  
+
+### Exploitation:
+If any successful vulnerabilities are found change any relevant claims to try to exploit it (here using the *Inject JWKS* exploit and injecting a new username):  
+`$ python3 jwt_tool.py -t https://www.ticarpi.com/ -rc "jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpbiI6InRpY2FycGkifQ.bsSwqj2c2uI9n7-ajmi3ixVGhPUiY7jO9SUn9dm15Po;anothercookie=test" -X i -I -pc name -pv admin` 
+
+### Fuzzing:
+Dig deeper by testing for unexpected values and claims to identify unexpected app behaviours, or run attacks on programming logic or token processing:  
+`$ python3 jwt_tool.py -t https://www.ticarpi.com/ -rc "jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpbiI6InRpY2FycGkifQ.bsSwqj2c2uI9n7-ajmi3ixVGhPUiY7jO9SUn9dm15Po;anothercookie=test" -I -hc kid -hv custom_sqli_vectors.txt`  
+
+### Review:
+Review any successful exploitation by querying the logs to read more data about the request and :  
+`$ python3 jwt_tool.py -t https://www.ticarpi.com/ -rc "jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpbiI6InRpY2FycGkifQ.bsSwqj2c2uI9n7-ajmi3ixVGhPUiY7jO9SUn9dm15Po;anothercookie=test" -X i -I -pc name -pv admin`   
+
+---
 
 ### Help
 For a list of options call the usage function:
 Some options such as Verifying tokens require additional parameters/files to be provided:  
 `$ python3 jwt_tool.py -h`
 
-**A more detailed user guide can be found on the [wiki page](https://github.com/ticarpi/jwt_tool/wiki/Usingjwt_tool).**
+**A more detailed user guide can be found on the [wiki page](https://github.com/ticarpi/jwt_tool/wiki/Using-jwt_tool).**
 
 ---
 
@@ -76,6 +122,20 @@ Head over to the [JWT Attack Playbook](https://github.com/ticarpi/jwt_tool/wiki)
 ---
 
 ## Version History/Changelog
+
+### v2.0
+* October 2020
+* Python 3.x
+* MAJOR REWRITE: lots more capabilities and new commandline arguments/flags - docs written and guides published
+* [+] Send tokens directly to the web application from jwt_tool, and proxy through existing tools (Burp, ZAP, etc.)
+* [+] ALL NEW SCANNING MODE!:
+  * Scan for common vulnerabilities from the [JWT Attack Playbook](https://github.com/ticarpi/jwt_tool/wiki)
+  * Test for error conditions by forcing invalid content-types in claims
+  * Test for unused valid claims by injection
+* [+] Customise your default options in the config file
+* [+] Built-in dictionaries and assistive lists to find bugs and misconfigurations
+* [+] Logging enabled for all tokens, allowing audit, review and re-tampering of successful requests
+* [+] Inject token claims and values on-the-fly across all modes, fuzz values from lists, and bruteforce accepted values
 
 ### v1.3.5
 * October 2020
