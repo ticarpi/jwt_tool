@@ -39,6 +39,13 @@ Installation is just a case of downloading the `jwt_tool.py` file (or `git clone
 `$ git clone https://github.com/ticarpi/jwt_tool`  
 `$ python3 -m pip install termcolor cprint pycryptodomex requests`  
 
+On first run the tool will generate a config file, some utility files, logfile, and a set of Public and Private keys in various formats.  
+
+### Custom Configs
+* To make best use of the scanning options it is **strongly advised** to copy the custom-generated JWKS file somewhere that can be accessed remotely via a URL. This address should then be stored in `jwtconf.ini` as the "jwkloc" value.  
+* In order to capture external service interactions - such as DNS lookups and HTTP requests - put your unique address for Burp Collaborator (or other alternative tools such as RequestBin) into the config file as the "httplistener" value.  
+***Review the other options in the config file to customise your experience.***
+
 ---
 
 ## Usage
