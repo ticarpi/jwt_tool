@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# JWT_Tool version 2.0 (16_10_2020)
+# JWT_Tool version 2.0.1 (25_10_2020)
 # Written by Andy Tyler (@ticarpi)
 # Please use responsibly...
 # Software URL: https://github.com/ticarpi/jwt_tool
@@ -83,7 +83,7 @@ def createConfig():
         'ecpubkey': ecpubkeyName,
         'ecprivkey': ecprivKeyName,
         'jwks': jwksName}
-    config['services'] = {'jwt_tool_version': '2.0',
+    config['services'] = {'jwt_tool_version': '2.0.1',
         '# To disable the proxy option set this value to False (no quotes)': None, 'proxy': 'localhost:8080',
         '# Set this to the URL you are hosting your custom JWKS file (jwttool_custom_jwks.json) - your own server, or maybe a cheeky reflective URL (https://httpbin.org/base64/{base64-encoded_JWKS_here})': None,
         'jwksloc': '',
@@ -263,13 +263,13 @@ def injectpayloadclaim(payloadclaim, injectionvalue):
     newpaylDict = paylDict
     # print(paylDict)
     # print(newpaylDict)
-    newpaylDict[payloadclaim] = injectionvalue
+    newpaylDict[payloadclaim] = castInput(injectionvalue)
     newPaylB64 = base64.urlsafe_b64encode(json.dumps(newpaylDict,separators=(",",":")).encode()).decode('UTF-8').strip("=")
     return newpaylDict, newPaylB64
 
 def injectheaderclaim(headerclaim, injectionvalue):
     newheadDict = headDict
-    newheadDict[headerclaim] = injectionvalue
+    newheadDict[headerclaim] = castInput(injectionvalue)
     newHeadB64 = base64.urlsafe_b64encode(json.dumps(newheadDict,separators=(",",":")).encode()).decode('UTF-8').strip("=")
     return newheadDict, newHeadB64
 
@@ -536,18 +536,30 @@ def crackSig(sig, contents):
         cprint(utf8errors, " UTF-8 incompatible passwords skipped", "cyan")
 
 def castInput(newInput):
-    if newInput == None:
-        return newInput
-    elif type(newInput) == bool or type(newInput) == int:
-        return newInput
+    if "{" in newInput:
+        try:
+            jsonInput = json.loads(newInput)
+            return jsonInput
+        except ValueError:
+            pass
+    if "\"" in newInput:
+        return newInput.strip("\"")
+    elif newInput == "True" or newInput == "true":
+        return True
+    elif newInput == "False" or newInput == "false":
+        return False
+    elif newInput == "null":
+        return None
     else:
         try:
-            newInput = json.dumps(newInput)
-        except ValueError:
+            numInput = float(newInput)
             try:
-                newInput = json.dumps(newInput.replace("'", "\""))
-            except ValueError:
-                pass
+                intInput = int(newInput)
+                return intInput
+            except:
+                return numInput
+        except:
+            return str(newInput)
     return newInput
 
 def buildSubclaim(newVal, claimList, selection):
@@ -1637,7 +1649,7 @@ if __name__ == '__main__':
     print("\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |  \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  / \\\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |   \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |       \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |  \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |  \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |")
     print("\\\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  /   \\\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |   \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |       \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\\\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  |\\\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |")
     print(" \______/ \__/     \__|   \__|\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\\__| \______/  \______/ \__|")
-    print("  \x1b[36mVersion 2.0          \x1b[0m       \______|             \x1b[36m@ticarpi\x1b[0m      ")
+    print(" \x1b[36mVersion 2.0.1          \x1b[0m      \______|             \x1b[36m@ticarpi\x1b[0m      ")
     print()
 
     parser = argparse.ArgumentParser(epilog="If you don't have a token, try this one:\neyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpbiI6InRpY2FycGkifQ.bsSwqj2c2uI9n7-ajmi3ixVGhPUiY7jO9SUn9dm15Po", formatter_class=argparse.RawTextHelpFormatter)
@@ -1668,7 +1680,7 @@ if __name__ == '__main__':
     parser.add_argument("-S", "--sign", action="store",
                         help="sign the resulting token:\nhs256/hs384/hs512 = HMAC-SHA signing (specify a secret with -k/-p)\nrs256/rs384/hs512 = RSA signing (specify an RSA private key with -pr)\nec256/ec384/ec512 = Elliptic Curve signing (specify an EC private key with -pr)\nps256/ps384/ps512 = PSS-RSA signing (specify an RSA private key with -pr)")
     parser.add_argument("-I", "--injectclaims", action="store_true",
-                        help="inject new claims and update existing claims with new values\n(set signing options with -S or use exploits with -X)\n(set target claim with -pc and injection values/lists with -iv/-if")
+                        help="inject new claims and update existing claims with new values\n(set signing options with -S or use exploits with -X)\n(set target claim with -hc/-pc and injection values/lists with -hv/-pv")
     parser.add_argument("-Q", "--query", action="store",
                         help="Query a token ID against the logfile to see the details of that request\ne.g. -Q jwttool_46820e62fe25c10a3f5498e426a9f03a")
     parser.add_argument("-d", "--dict", action="store",
