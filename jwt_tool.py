@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# JWT_Tool version 2.0.1 (25_10_2020)
+# JWT_Tool version 2.0.2 (28_10_2020)
 # Written by Andy Tyler (@ticarpi)
 # Please use responsibly...
 # Software URL: https://github.com/ticarpi/jwt_tool
@@ -83,7 +83,7 @@ def createConfig():
         'ecpubkey': ecpubkeyName,
         'ecprivkey': ecprivKeyName,
         'jwks': jwksName}
-    config['services'] = {'jwt_tool_version': '2.0.1',
+    config['services'] = {'jwt_tool_version': '2.0.2',
         '# To disable the proxy option set this value to False (no quotes)': None, 'proxy': 'localhost:8080',
         '# Set this to the URL you are hosting your custom JWKS file (jwttool_custom_jwks.json) - your own server, or maybe a cheeky reflective URL (https://httpbin.org/base64/{base64-encoded_JWKS_here})': None,
         'jwksloc': '',
@@ -363,11 +363,10 @@ def tamperToken(paylDict, headDict, sig):
             exit(1)
         if selection<len(paylList) and selection>0:
             if isinstance(paylDict[paylList[selection]], dict):
-                print("\nPlease select a sub-field number for the "+pair+" claim:\n(or 0 to Continue)")
+                print("\nPlease select a sub-field number for the "+str(paylList[selection])+" claim:\n(or 0 to Continue)")
                 newVal = OrderedDict()
                 for subclaim in paylDict[paylList[selection]]:
-                    print(subclaim)
-                    newVal[subclaim] = paylDict[pair][subclaim]
+                    newVal[subclaim] = paylDict[paylList[selection]][subclaim]
                 newVal = buildSubclaim(newVal, paylList, selection)
                 paylDict[paylList[selection]] = newVal
             else:
@@ -536,13 +535,13 @@ def crackSig(sig, contents):
         cprint(utf8errors, " UTF-8 incompatible passwords skipped", "cyan")
 
 def castInput(newInput):
-    if "{" in newInput:
+    if "{" in str(newInput):
         try:
             jsonInput = json.loads(newInput)
             return jsonInput
         except ValueError:
             pass
-    if "\"" in newInput:
+    if "\"" in str(newInput):
         return newInput.strip("\"")
     elif newInput == "True" or newInput == "true":
         return True
@@ -1143,16 +1142,16 @@ def dissectPayl(paylDict, count=False):
             timeseen += 1
             comparestamps.append(claim)
         elif isinstance(paylDict[claim], dict):
-                print("["+placeholder+"] "+claim+" = JSON object:")
+                cprint("["+placeholder+"] "+claim+" = JSON object:", "green")
                 for subclaim in paylDict[claim]:
-                    if paylDict[claim][subclaim] == None:
-                        print("    [+] "+subclaim+" = null")
-                    elif paylDict[claim][subclaim] == True:
-                        print("    [+] "+subclaim+" = true")
-                    elif paylDict[claim][subclaim] == False:
-                        print("    [+] "+subclaim+" = false")
-                    elif type(castInput(paylDict[claim][subclaim])) == str:
+                    if type(castInput(paylDict[claim][subclaim])) == str:
                         cprint("    [+] "+subclaim+" = \""+str(paylDict[claim][subclaim])+"\"", "green")
+                    elif paylDict[claim][subclaim] == None:
+                        cprint("    [+] "+subclaim+" = null", "green")
+                    elif paylDict[claim][subclaim] == True and not paylDict[claim][subclaim] == 1:
+                        cprint("    [+] "+subclaim+" = true", "green")
+                    elif paylDict[claim][subclaim] == False and not paylDict[claim][subclaim] == 0:
+                        cprint("    [+] "+subclaim+" = false", "green")
                     else:
                         cprint("    [+] "+subclaim+" = "+str(paylDict[claim][subclaim]), "green")
         else:
@@ -1649,7 +1648,7 @@ if __name__ == '__main__':
     print("\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |  \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  / \\\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |   \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |       \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |  \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |  \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |")
     print("\\\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  /   \\\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |   \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |       \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\\\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  |\\\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |")
     print(" \______/ \__/     \__|   \__|\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\\__| \______/  \______/ \__|")
-    print(" \x1b[36mVersion 2.0.1          \x1b[0m      \______|             \x1b[36m@ticarpi\x1b[0m      ")
+    print(" \x1b[36mVersion 2.0.2          \x1b[0m      \______|             \x1b[36m@ticarpi\x1b[0m      ")
     print()
 
     parser = argparse.ArgumentParser(epilog="If you don't have a token, try this one:\neyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpbiI6InRpY2FycGkifQ.bsSwqj2c2uI9n7-ajmi3ixVGhPUiY7jO9SUn9dm15Po", formatter_class=argparse.RawTextHelpFormatter)
