@@ -46,6 +46,13 @@ On first run the tool will generate a config file, some utility files, logfile, 
 * In order to capture external service interactions - such as DNS lookups and HTTP requests - put your unique address for Burp Collaborator (or other alternative tools such as RequestBin) into the config file as the "httplistener" value.  
 ***Review the other options in the config file to customise your experience.***
 
+### Colour bug in Windows
+To fix broken colours in Windows cmd/Powershell: uncomment the below two lines in `jwt_tool.py` (remove the "# " from the beginning of each line)  
+You will also need to install colorama: `python3 -m pip install colorama`
+```
+# import colorama
+# colorama.init()
+```
 ---
 
 ## Usage
@@ -129,6 +136,21 @@ Head over to the [JWT Attack Playbook](https://github.com/ticarpi/jwt_tool/wiki)
 ---
 
 ## Version History/Changelog
+
+### v2.1.0
+* November 2020
+* Python 3.x
+* [+] NEW exploit: null signature (`-X n`)  
+* [+] NEW scanner mode: Inject Common Claims (`-M cc`)  
+* [+] additional checks in 'Playbook' scan mode (`-M pb`)  
+* [+] multiple custom headers now supported (`-rh`)  
+* [+] reflective JWKS URL created automatically in config file - for JKU/Spoof JWKS attacks (`-X s`)  
+* [+] checks added for old/incompatible config files  
+* [+] report on long HTTP response times  
+* Bugfixes:  
+  * fixed colours not working in Windows cmd/Powershell  
+  * fixed capitalisation issue in config file  
+  * fixed broken null signed kid attacks in ScanModePlaybook()  
 
 ### v2.0
 * October 2020
