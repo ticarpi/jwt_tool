@@ -1,7 +1,6 @@
 # The JSON Web Token Toolkit v2
 >*jwt_tool.py* is a toolkit for validating, forging, scanning and tampering JWTs (JSON Web Tokens).  
 
-![logo](https://user-images.githubusercontent.com/19988419/100555535-18598280-3294-11eb-80ed-ca5a0c3455d6.png)
 
 Its functionality includes:
 * Checking the validity of a token
@@ -9,6 +8,8 @@ Its functionality includes:
   * (CVE-2015-2951) The ***alg=none*** signature-bypass vulnerability
   * (CVE-2016-10555) The ***RS/HS256*** public key mismatch vulnerability
   * (CVE-2018-0114) ***Key injection*** vulnerability
+  * (CVE-2019-20933/CVE-2020-28637) ***Blank password*** vulnerability
+  * (CVE-2020-28042) ***Null signature*** vulnerability
 * Scanning for misconfigurations or known weaknesses
 * Fuzzing claim values to provoke unexpected behaviours
 * Testing the validity of a secret/key file/Public Key/JWKS key
@@ -137,6 +138,17 @@ Head over to the [JWT Attack Playbook](https://github.com/ticarpi/jwt_tool/wiki)
 ---
 
 ## Version History/Changelog
+
+### v2.2.0
+* December 2020
+* Python 3.x
+* [+] NEW exploit: blank password in signature (`-X b`)  
+* [+] NEW 'bare' mode: return only tokens to stdout - for using with upcoming integrations (`-b`)  
+* [+] additional checks in 'Playbook' scan mode (`-M pb`)  
+* [+] reordered help options to group similar options  
+* Bugfixes:  
+  * fixed Playbook scanner glitches
+  * fixed config file generation issues  
 
 ### v2.1.0
 * November 2020

