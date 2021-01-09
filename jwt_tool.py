@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 #
-# JWT_Tool version 2.2.0 (29_12_2020)
+# JWT_Tool version 2.2.1 (09_01_2021)
 # Written by Andy Tyler (@ticarpi)
 # Please use responsibly...
 # Software URL: https://github.com/ticarpi/jwt_tool
 # Web: https://www.ticarpi.com
 # Twitter: @ticarpi
 
-jwttoolvers = "2.2.0"
+jwttoolvers = "2.2.1"
 import ssl
 import sys
 import os
@@ -30,12 +30,14 @@ except:
     print("WARNING: Cryptodome libraries not imported - these are needed for asymmetric crypto signing and verifying")
     print("On most Linux systems you can run the following command to install:")
     print("python3 -m pip install pycryptodomex\n")
+    exit(1)
 try:
     from termcolor import cprint
 except:
     print("WARNING: termcolor library is not imported - this is used to make the output clearer and oh so pretty")
     print("On most Linux systems you can run the following command to install:")
     print("python3 -m pip install termcolor\n")
+    exit(1)
 try:
     import requests
     from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -44,6 +46,7 @@ except:
     print("WARNING: Python Requests libraries not imported - these are needed for external service interaction")
     print("On most Linux systems you can run the following command to install:")
     print("python3 -m pip install requests\n")
+    exit(1)
 # To fix broken colours in Windows cmd/Powershell: uncomment the below two lines. You will need to install colorama: 'python3 -m pip install colorama'
 # import colorama
 # colorama.init()
@@ -1369,7 +1372,7 @@ def scanModePlaybook():
     key = ""
     newSig, newContents = signTokenHS(headDict, paylDict, key, 256)
     jwtBlankPw = newContents+"."+newSig
-    jwtOut(jwtBlankPw, "Exploit: Blank password accepted in signature (-X b)", "This token can exploit a hard-coded bank password in the config")
+    jwtOut(jwtBlankPw, "Exploit: Blank password accepted in signature (-X b)", "This token can exploit a hard-coded blank password in the config")
     # Exploit: null signature      
     jwtNull = checkNullSig(contents)
     jwtOut(jwtNull, "Exploit: Null signature (-X n)", "This token was sent to check if a null signature can bypass checks")
@@ -1464,6 +1467,14 @@ def scanModePlaybook():
         cprintc("External service interactions have been tested - check your listener for interactions", "green")
     else:
         cprintc("External service interactions not tested - enter listener URL into 'jwtconf.ini' to try this option", "red")
+    # Accept Common HMAC secret (as alterative signature)
+    with open(config['input']['wordlist']) as commonPassList:
+        commonPass = commonPassList.readline().rstrip()
+        while commonPass:
+            newSig, newContents = signTokenHS(headDict, paylDict, commonPass, 256)
+            jwtOut(newContents+"."+newSig, "Checking for alternative accepted HMAC signatures, based on common passwords. Testing: "+commonPass+"", "This token can exploit a hard-coded common password in the config")
+            commonPass = commonPassList.readline().rstrip()
+    # SCAN COMPLETE
     cprintc("Scanning mode completed: review the above results.\n", "magenta")
     # Further manual testing: check expired token, brute key, find Public Key, run other scans
     cprintc("The following additional checks should be performed that are better tested manually:", "magenta")

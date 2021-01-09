@@ -1,6 +1,8 @@
 # The JSON Web Token Toolkit v2
 >*jwt_tool.py* is a toolkit for validating, forging, scanning and tampering JWTs (JSON Web Tokens).  
 
+![jwt_tool version](https://img.shields.io/badge/version-v2.2.1-blue) ![python version](https://img.shields.io/badge/python-v3.6+-green)
+
 ![logo](https://user-images.githubusercontent.com/19988419/100555535-18598280-3294-11eb-80ed-ca5a0c3455d6.png)
 
 Its functionality includes:
@@ -139,6 +141,12 @@ Head over to the [JWT Attack Playbook](https://github.com/ticarpi/jwt_tool/wiki)
 ---
 
 ## Version History/Changelog
+
+### v2.2.1
+* January 2021
+* Python 3.x
+* [+] New scan test (re-signing of tokens with common passwords) in 'Playbook' scan mode (`-M pb`)  
+* [+] Added new hard-coded secret from CVE-2020-1764 to jwt-common.txt
 
 ### v2.2.0
 * December 2020
