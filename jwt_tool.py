@@ -1920,7 +1920,7 @@ if __name__ == '__main__':
     paylB64 = base64.urlsafe_b64encode(json.dumps(paylDict,separators=(",",":")).encode()).decode('UTF-8').strip("=")
     config['argvals']['overridesub'] = "false"
     if args.targeturl:
-        config['argvals']['targetUrl'] = args.targeturl
+        config['argvals']['targetUrl'] = args.targeturl.replace('%','%%')
     if args.cookies:
         config['argvals']['cookies'] = args.cookies
     if args.headers:
