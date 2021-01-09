@@ -12,6 +12,8 @@ C2A4EB068AF8ABEF18D80B1689C7D785
 GQDstcKsx0NHjPOuXOYg5MbeJ1XT0uFiwDVvVBrk
 Hello, World!
 J5hZTw1vtee0PGaoAuaW
+[107 105 97 108 105]
+kiali
 My super secret key!
 Original secret string
 R9MyWaEoyiMYViVWo8Fk4TUGWiSoaW6U1nOqXri8_XU
