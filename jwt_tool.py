@@ -1171,7 +1171,7 @@ def dissectPayl(paylDict, count=False):
             try:
                 timestamp = datetime.fromtimestamp(int(paylDict[claim]))
             except:
-                timestamp = parse(paylDict[claim].encode())
+                timestamp = datetime.strptime(paylDict[claim], "%Y-%m-%dT%H:%M:%S.%fZ")
             if claim == "exp":
                 if int(timestamp.timestamp()) < nowtime:
                     expiredtoken = True
