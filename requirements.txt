@@ -2,3 +2,4 @@ termcolor
 cprint
 pycryptodomex
 requests
+python-dateutil
