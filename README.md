@@ -142,6 +142,17 @@ Head over to the [JWT Attack Playbook](https://github.com/ticarpi/jwt_tool/wiki)
 
 ## Version History/Changelog
 
+### v2.2.2
+* February 2021
+* Python 3.x
+* [+] Send original token when targeturl present
+* [+] Send Query token when targeturl present
+* Bugfixes:  
+  * fixed request header split - error on multiple colons
+  * fixed error in signing syntax: `ec256` vs `es256`
+  * fixed timestamp calculations
+  * sign with manual private key reinstated
+
 ### v2.2.1
 * January 2021
 * Python 3.x

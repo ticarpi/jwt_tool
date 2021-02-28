@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 #
-# JWT_Tool version 2.2.1 (09_01_2021)
+# JWT_Tool version 2.2.2 (26_02_2021)
 # Written by Andy Tyler (@ticarpi)
 # Please use responsibly...
 # Software URL: https://github.com/ticarpi/jwt_tool
 # Web: https://www.ticarpi.com
 # Twitter: @ticarpi
 
-jwttoolvers = "2.2.1"
+jwttoolvers = "2.2.2"
 import ssl
 import sys
 import os
@@ -138,7 +138,7 @@ def sendToken(token, cookiedict, track, headertoken=""):
     headers = {'User-agent': config['customising']['useragent']+" "+track}
     if headertoken:
         for eachHeader in headertoken:
-            headerName, headerVal = eachHeader.split(":")
+            headerName, headerVal = eachHeader.split(":",1)
             headers[headerName] = headerVal.lstrip(" ")
     try:
         if config['services']['proxy'] == "False":
@@ -220,7 +220,7 @@ def jwtOut(token, fromMod, desc=""):
                 resData = sendToken(token, cookiedict, logID, headertoken[0])
             else:
                 cprintc("[-] No substitution occurred - check that a token is included in a cookie/header in the request", "red")
-                cprintc(headertoken, cookietoken, "cyan")
+                # cprintc(headertoken, cookietoken, "cyan")
                 exit(1)
         if config['argvals']['canaryvalue']:
             if config['argvals']['canaryvalue'] in str(resData[2]):
@@ -501,7 +501,7 @@ def signingToken(newheadDict, newpaylDict):
         newSig, newContents = signTokenRSA(newheadDict, newpaylDict, config['crypto']['privkey'], int(config['argvals']['sigType'][2:]))
         desc = "Tampered token - RSA Signing:"
         jwtOut(newContents+"."+newSig, "Manual Tamper - RSA Signing", desc)
-    elif config['argvals']['sigType'][0:2] == "ec":
+    elif config['argvals']['sigType'][0:2] == "es":
         newSig, newContents = signTokenEC(newheadDict, newpaylDict, config['crypto']['ecprivkey'], int(config['argvals']['sigType'][2:]))
         desc = "Tampered token - EC Signing:"
         jwtOut(newContents+"."+newSig, "Manual Tamper - EC Signing", desc)
@@ -1281,6 +1281,8 @@ def rejigToken(headDict, paylDict, sig):
             timeoff = int(paylDict[comparestamps[claimnum]])-int(paylDict[comparestamps[0]])
             if timeoff != 0:
                 timecalc = timeoff
+                if timecalc < 0:
+                    timecalc = timecalc*-1
                 days,hours,mins = 0,0,0
                 if timecalc >= 86400:
                     days = str(timecalc/86400)
@@ -1305,6 +1307,10 @@ def rejigToken(headDict, paylDict, sig):
     if expiredtoken:
         cprintc("[-] TOKEN IS EXPIRED!", "red")
     cprintc("\n----------------------\nJWT common timestamps:\niat = IssuedAt\nexp = Expires\nnbf = NotBefore\n----------------------\n", "white")
+    if args.targeturl and not args.crack and not args.exploit and not args.verify and not args.tamper and not args.sign:
+        cprintc("[+] Sending token", "cyan")
+        newContents = genContents(headDict, paylDict)
+        jwtOut(newContents+"."+sig, "Sending token")
     return headDict, paylDict, sig
 
 def searchLog(logID):
@@ -1312,10 +1318,11 @@ def searchLog(logID):
     with open(logFilename, 'r') as logFile:
         logLine = logFile.readline()
         while logLine:
-            if logID in logLine:
+            if re.search('^'+logID, logLine):
                 qResult = logLine
                 break
-            logLine = logFile.readline()
+            else:
+                logLine = logFile.readline()
         if qResult:
             qOutput = re.sub(' - eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', '', qResult)
             qOutput = re.sub(logID+' - ', '', qOutput)
@@ -1327,8 +1334,8 @@ def searchLog(logID):
             cprintc(logID+"\n"+qOutput, "green")
             cprintc("JWT from request:", "cyan")
             cprintc(jwt, "green")
-            headDict, paylDict, sig, contents = validateToken(jwt)
-            rejigToken(headDict, paylDict, sig)
+            # headDict, paylDict, sig, contents = validateToken(jwt)
+            # rejigToken(headDict, paylDict, sig)
             return jwt
         else:
             cprintc("ID not found in logfile", "red")
@@ -1645,6 +1652,8 @@ def preScan():
             shallWeGoOn = input("Do you wish to continue anyway? (\"Y\" or \"N\")")
             if shallWeGoOn == "N":
                 exit(1)
+            elif shallWeGoOn == "n":
+                exit(1)
     origResSize, origResCode = config['argvals']['ressize'], config['argvals']['rescode']
     jwtOut("null", "Prescan: no token", "Prescan: no token")
     nullResSize, nullResCode = config['argvals']['ressize'], config['argvals']['rescode']
@@ -1653,6 +1662,8 @@ def preScan():
             cprintc("Valid and missing token requests return the same Status Code.\nYou should probably specify something from the page that identifies the user is logged-in (e.g. -cv \"Welcome back, ticarpi!\")", "red")
             shallWeGoOn = input("Do you wish to continue anyway? (\"Y\" or \"N\")")
             if shallWeGoOn == "N":
+                exit(1)
+            elif shallWeGoOn == "n":
                 exit(1)
     jwtTweak = contents.decode()+"."+sig[:-4]
     jwtOut(jwtTweak, "Prescan: Broken signature", "This token was sent to check if the signature is being checked")
@@ -1816,7 +1827,9 @@ if __name__ == '__main__':
     parser.add_argument("-ju", "--jwksurl", action="store",
                         help="URL location where you can host a spoofed JWKS")
     parser.add_argument("-S", "--sign", action="store",
-                        help="sign the resulting token:\nhs256/hs384/hs512 = HMAC-SHA signing (specify a secret with -k/-p)\nrs256/rs384/hs512 = RSA signing (specify an RSA private key with -pr)\nec256/ec384/ec512 = Elliptic Curve signing (specify an EC private key with -pr)\nps256/ps384/ps512 = PSS-RSA signing (specify an RSA private key with -pr)")
+                        help="sign the resulting token:\nhs256/hs384/hs512 = HMAC-SHA signing (specify a secret with -k/-p)\nrs256/rs384/hs512 = RSA signing (specify an RSA private key with -pr)\nes256/es384/es512 = Elliptic Curve signing (specify an EC private key with -pr)\nps256/ps384/ps512 = PSS-RSA signing (specify an RSA private key with -pr)")
+    parser.add_argument("-pr", "--privkey", action="store",
+                        help="Private Key for Asymmetric crypto")
     parser.add_argument("-T", "--tamper", action="store_true",
                         help="tamper with the JWT contents\n(set signing options with -S or use exploits with -X)")
     parser.add_argument("-I", "--injectclaims", action="store_true",
@@ -1845,8 +1858,6 @@ if __name__ == '__main__':
                         help="JSON Web Key Store for Asymmetric crypto")
     parser.add_argument("-Q", "--query", action="store",
                         help="Query a token ID against the logfile to see the details of that request\ne.g. -Q jwttool_46820e62fe25c10a3f5498e426a9f03a")
-    # parser.add_argument("-pr", "--privkey", action="store",
-    #                     help="Private Key for Asymmetric crypto")
     args = parser.parse_args()
     if not args.bare:
         printLogo()
@@ -1894,14 +1905,14 @@ if __name__ == '__main__':
                 cprintc("Cannot find a valid JWT", "red")
                 cprintc(args.cookies+" | "+args.headers, "cyan")
                 exit(1)
-    if args.jwt:
+    if args.query:
+        jwt = searchLog(args.query)
+    elif args.jwt:
         jwt = args.jwt
         cprintc("Original JWT: "+findJWT+"\n", "cyan")
     elif findJWT:
         jwt = findJWT
         cprintc("Original JWT: "+findJWT+"\n", "cyan")
-    elif args.query:
-        jwt = searchLog(args.query)
     else:
         parser.print_usage()
         cprintc("No JWT provided", "red")
@@ -1921,7 +1932,7 @@ if __name__ == '__main__':
         else:
             config['argvals']['exploitType'] = args.exploit
     if args.sign:
-        if args.sign not in ['hs256','hs384','hs512','rs256','rs384','rs512','ec256','ec384','ec512','ps256','ps384','ps512']:
+        if args.sign not in ['hs256','hs384','hs512','rs256','rs384','rs512','es256','es384','es512','ps256','ps384','ps512']:
             parser.print_usage()
             cprintc("\nPlease choose a signature option (e.g. -S hs256)", "red")
             exit(1)
@@ -1944,8 +1955,8 @@ if __name__ == '__main__':
         config['argvals']['key'] = args.password
     if args.pubkey:
         config['crypto']['pubkey'] = args.pubkey
-    # if args.privkey:
-    #     config['crypto']['privkey'] = args.privkey
+    if args.privkey:
+        config['crypto']['privkey'] = args.privkey
     if args.jwksfile:
         config['crypto']['jwks'] = args.jwksfile
     if args.jwksurl:
@@ -1964,7 +1975,7 @@ if __name__ == '__main__':
         config['argvals']['canaryvalue'] = args.canaryvalue
     if args.noproxy:
         config['services']['proxy'] = "False"
-    if not args.crack and not args.exploit and not args.verify and not args.tamper and not args.injectclaims and not args.query:
+    if not args.crack and not args.exploit and not args.verify and not args.tamper and not args.injectclaims:
         rejigToken(headDict, paylDict, sig)
         if args.sign:
             signingToken(headDict, paylDict)
@@ -2031,7 +2042,7 @@ if __name__ == '__main__':
                 injectOut(newheadDict, newpaylDict)
                 exit(1)
     if args.mode:
-        if not config['argvals']['targeturl']:
+        if not config['argvals']['targeturl'] and not args.bare:
             cprintc("No target secified (-t), cannot scan offline.", "red")
             exit(1)
         runScanning()
