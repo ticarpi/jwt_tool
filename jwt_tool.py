@@ -133,7 +133,9 @@ def createConfig():
     cprintc("Make sure to set the \"httplistener\" value to a URL you can monitor to enable out-of-band checks.", "cyan")
     exit(1)
 
-def sendToken(token, cookiedict, track, headertoken=""):
+def sendToken(token, cookiedict, track, headertoken="", postdata=None):
+    if not postdata:
+        postdata = config['argvals']['postData']
     url = config['argvals']['targetUrl']
     headers = {'User-agent': config['customising']['useragent']+" "+track}
     if headertoken:
@@ -142,14 +144,14 @@ def sendToken(token, cookiedict, track, headertoken=""):
             headers[headerName] = headerVal.lstrip(" ")
     try:
         if config['services']['proxy'] == "False":
-            if config['argvals']['postData']:
-                response = requests.post(url, data=config['argvals']['postData'], headers=headers, cookies=cookiedict, proxies=False, verify=False)
+            if postdata:
+                response = requests.post(url, data=postdata, headers=headers, cookies=cookiedict, proxies=False, verify=False)
             else:
                 response = requests.get(url, headers=headers, cookies=cookiedict, proxies=False, verify=False)
         else:
             proxies = {'http': 'http://'+config['services']['proxy'], 'https': 'http://'+config['services']['proxy']}
-            if config['argvals']['postData']:
-                response = requests.post(url, data=config['argvals']['postData'], headers=headers, cookies=cookiedict, proxies=proxies, verify=False)
+            if postdata:
+                response = requests.post(url, data=postdata, headers=headers, cookies=cookiedict, proxies=proxies, verify=False)
             else:
                 response = requests.get(url, headers=headers, cookies=cookiedict, proxies=proxies, verify=False)
         if int(response.elapsed.total_seconds()) >= 9:
@@ -189,10 +191,12 @@ def jwtOut(token, fromMod, desc=""):
     if config['argvals']['targetUrl'] != "":
         curTargetUrl = config['argvals']['targetUrl']
         p = re.compile('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*')
+
         if config['argvals']['headerloc'] == "cookies":
             cookietoken = p.subn(token, config['argvals']['cookies'], 0)
         else:
             cookietoken = [config['argvals']['cookies'],0]
+
         if config['argvals']['headerloc'] == "headers":
             headertoken = [[],0]
             for eachHeader in args.headers:
@@ -208,16 +212,26 @@ def jwtOut(token, fromMod, desc=""):
             if args.headers:
                 for eachHeader in args.headers:
                         headertoken[0].append(eachHeader)
+
+        if config['argvals']['headerloc'] == "postdata":
+            posttoken = p.subn(token, config['argvals']['postdata'], 0)
+        else:
+            posttoken = [config['argvals']['postdata'],0]
+
+
         try:
             cookiedict = parse_dict_cookies(cookietoken[0])
         except:
             cookiedict = {}
+
+        
+
         # Check if token was included in substitution 
-        if cookietoken[1] == 1 or headertoken[1] == 1:
-            resData = sendToken(token, cookiedict, logID, headertoken[0])
+        if cookietoken[1] == 1 or headertoken[1] == 1 or posttoken[1]:
+            resData = sendToken(token, cookiedict, logID, headertoken[0], posttoken[0])
         else:
             if config['argvals']['overridesub'] == "true":
-                resData = sendToken(token, cookiedict, logID, headertoken[0])
+                resData = sendToken(token, cookiedict, logID, headertoken[0], posttoken[0])
             else:
                 cprintc("[-] No substitution occurred - check that a token is included in a cookie/header in the request", "red")
                 # cprintc(headertoken, cookietoken, "cyan")
@@ -1880,11 +1894,26 @@ if __name__ == '__main__':
         pass
     findJWT = ""
     if args.targeturl:
-        if args.cookies or args.headers:
-            if args.cookies and args.headers:
-                if re.search('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', args.cookies) and re.search('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', str(args.headers)):
-                    cprintc("Too many tokens! JWT in cookie and header", "red")
-                    exit(1)
+        if args.cookies or args.headers or args.postdata:
+            jwt_count = 0
+            jwt_locations = []
+
+            if args.cookies and re.search('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', args.cookies):
+                jwt_count += 1
+                jwt_locations.append("cookie")
+
+            if args.headers and re.search('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', str(args.headers)):
+                jwt_count += 1
+                jwt_locations.append("headers")
+
+            if args.postdata and re.search('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', str(args.postdata)):
+                jwt_count += 1
+                jwt_locations.append("post data")
+
+            if jwt_count > 1:
+                cprintc("Too many tokens! JWT in cookie and header", "red")
+                exit(1)
+
             if args.cookies:
                 try:
                     if re.search('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', args.cookies):
@@ -1892,6 +1921,7 @@ if __name__ == '__main__':
                 except:
                     cprintc("Invalid cookie formatting", "red")
                     exit(1)
+
             if args.headers:
                 try:
                     if re.search('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', str(args.headers)):
@@ -1899,11 +1929,26 @@ if __name__ == '__main__':
                 except:
                     cprintc("Invalid header formatting", "red")
                     exit(1)
+
+            if args.postdata:
+                try:
+                    if re.search('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', str(args.postdata)):
+                        config['argvals']['headerloc'] = "postdata"
+                except:
+                    cprintc("Invalid postdata formatting", "red")
+                    exit(1)
+
+            searchString = " | ".join([
+                str(args.cookies),
+                str(args.headers),
+                str(args.postdata)
+            ])
+
             try:
-                findJWT = re.search('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', str(args.cookies)+" | "+str(args.headers))[0]
+                findJWT = re.search('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', searchString)[0]
             except:
                 cprintc("Cannot find a valid JWT", "red")
-                cprintc(args.cookies+" | "+args.headers, "cyan")
+                cprintc(searchString, "cyan")
                 exit(1)
     if args.query:
         jwt = searchLog(args.query)
