@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 #
-# JWT_Tool version 2.2.2 (26_02_2021)
+# JWT_Tool version 2.2.3 (14_04_2021)
 # Written by Andy Tyler (@ticarpi)
 # Please use responsibly...
 # Software URL: https://github.com/ticarpi/jwt_tool
 # Web: https://www.ticarpi.com
 # Twitter: @ticarpi
 
-jwttoolvers = "2.2.2"
+jwttoolvers = "2.2.3"
 import ssl
 import sys
 import os
@@ -1911,7 +1911,7 @@ if __name__ == '__main__':
                 jwt_locations.append("post data")
 
             if jwt_count > 1:
-                cprintc("Too many tokens! JWT in cookie and header", "red")
+                cprintc("Too many tokens! JWT in more than one place: cookie, header, POST data", "red")
                 exit(1)
 
             if args.cookies:
