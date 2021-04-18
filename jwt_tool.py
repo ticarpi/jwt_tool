@@ -1261,6 +1261,8 @@ def validateToken(jwt):
             cprintc("[-] Invalid token:\nPAYLOAD not valid JSON format", "red")
             cprintc(payl.decode('UTF-8'))
             exit(1)
+    if args.verbose:
+        cprintc("[v] Token: "+head.decode()+"."+payl.decode()+"."+sig+"\n", "green")
     return headDict, paylDict, sig, contents
 
 def rejigToken(headDict, paylDict, sig):
@@ -1872,6 +1874,8 @@ if __name__ == '__main__':
                         help="JSON Web Key Store for Asymmetric crypto")
     parser.add_argument("-Q", "--query", action="store",
                         help="Query a token ID against the logfile to see the details of that request\ne.g. -Q jwttool_46820e62fe25c10a3f5498e426a9f03a")
+    parser.add_argument("-v", "--verbose", action="store_true",
+                        help="When parsing and printing, produce (slightly more) verbose output.")
     args = parser.parse_args()
     if not args.bare:
         printLogo()
