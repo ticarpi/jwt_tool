@@ -55,6 +55,10 @@ def cprintc(textval, colval):
     if not args.bare:
         cprint(textval, colval)
 
+def b64pad(buf):
+    """ Restore stripped B64 padding """
+    return buf + '=' * (4 - len(buf) % 4 if len(buf) % 4 in (2, 3) else 0)
+
 def createConfig():
     privKeyName = path+"/jwttool_custom_private_RSA.pem"
     pubkeyName = path+"/jwttool_custom_public_RSA.pem"
@@ -866,34 +870,13 @@ def verifyTokenRSA(headDict, paylDict, sig, pubKey):
     key = RSA.importKey(open(pubKey).read())
     newContents = genContents(headDict, paylDict)
     newContents = newContents.encode('UTF-8')
-    if "-" in sig:
+    try:
+        sig = base64.urlsafe_b64decode(b64pad(sig))
+    except ValueError:
         try:
-            sig = base64.urlsafe_b64decode(sig)
-        except:
-            pass
-        try:
-            sig = base64.urlsafe_b64decode(sig+"=")
-        except:
-            pass
-        try:
-            sig = base64.urlsafe_b64decode(sig+"==")
-        except:
-            pass
-    elif "+" in sig:
-        try:
-            sig = base64.b64decode(sig)
-        except:
-            pass
-        try:
-            sig = base64.b64decode(sig+"=")
-        except:
-            pass
-        try:
-            sig = base64.b64decode(sig+"==")
-        except:
-            pass
-    else:
-        cprintc("Signature not Base64 encoded HEX", "red")
+            sig = base64.b64decode(b64pad(sig))
+        except ValueError:
+            cprintc("Signature not Base64 encoded HEX", "red")
     if headDict['alg'] == "RS256":
         h = SHA256.new(newContents)
     elif headDict['alg'] == "RS384":
@@ -918,34 +901,13 @@ def verifyTokenRSA(headDict, paylDict, sig, pubKey):
 def verifyTokenEC(headDict, paylDict, sig, pubKey):
     newContents = genContents(headDict, paylDict)
     message = newContents.encode('UTF-8')
-    if "-" in str(sig):
+    try:
+        sig = base64.urlsafe_b64decode(b64pad(sig))
+    except ValueError:
         try:
-            signature = base64.urlsafe_b64decode(sig)
-        except:
-            pass
-        try:
-            signature = base64.urlsafe_b64decode(sig+"=")
-        except:
-            pass
-        try:
-            signature = base64.urlsafe_b64decode(sig+"==")
-        except:
-            pass
-    elif "+" in str(sig):
-        try:
-            signature = base64.b64decode(sig)
-        except:
-            pass
-        try:
-            signature = base64.b64decode(sig+"=")
-        except:
-            pass
-        try:
-            signature = base64.b64decode(sig+"==")
-        except:
-            pass
-    else:
-        cprintc("Signature not Base64 encoded HEX", "red")
+            sig = base64.b64decode(b64pad(sig))
+        except ValueError:
+            cprintc("Signature not Base64 encoded HEX", "red")
     if headDict['alg'] == "ES256":
         h = SHA256.new(message)
     elif headDict['alg'] == "ES384":
@@ -970,34 +932,13 @@ def verifyTokenPSS(headDict, paylDict, sig, pubKey):
     key = RSA.importKey(open(pubKey).read())
     newContents = genContents(headDict, paylDict)
     newContents = newContents.encode('UTF-8')
-    if "-" in sig:
+    try:
+        sig = base64.urlsafe_b64decode(b64pad(sig))
+    except ValueError:
         try:
-            sig = base64.urlsafe_b64decode(sig)
-        except:
-            pass
-        try:
-            sig = base64.urlsafe_b64decode(sig+"=")
-        except:
-            pass
-        try:
-            sig = base64.urlsafe_b64decode(sig+"==")
-        except:
-            pass
-    elif "+" in sig:
-        try:
-            sig = base64.b64decode(sig)
-        except:
-            pass
-        try:
-            sig = base64.b64decode(sig+"=")
-        except:
-            pass
-        try:
-            sig = base64.b64decode(sig+"==")
-        except:
-            pass
-    else:
-        cprintc("Signature not Base64 encoded HEX", "red")
+            sig = base64.b64decode(b64pad(sig))
+        except ValueError:
+            cprintc("Signature not Base64 encoded HEX", "red")
     if headDict['alg'] == "PS256":
         h = SHA256.new(newContents)
     elif headDict['alg'] == "PS384":
@@ -1095,30 +1036,8 @@ def parseJWKS(jwksfile):
             pass
 
 def genECPubFromJWKS(x, y, kid, nowtime):
-    try:
-        x = int.from_bytes(base64.urlsafe_b64decode(x), byteorder='big')
-    except:
-        pass
-    try:
-        x = int.from_bytes(base64.urlsafe_b64decode(x+"="), byteorder='big')
-    except:
-        pass
-    try:
-        x = int.from_bytes(base64.urlsafe_b64decode(x+"=="), byteorder='big')
-    except:
-        pass
-    try:
-        y = int.from_bytes(base64.urlsafe_b64decode(y), byteorder='big')
-    except:
-        pass
-    try:
-        y = int.from_bytes(base64.urlsafe_b64decode(y+"="), byteorder='big')
-    except:
-        pass
-    try:
-        y = int.from_bytes(base64.urlsafe_b64decode(y+"=="), byteorder='big')
-    except:
-        pass
+    x = int.from_bytes(base64.urlsafe_b64decode(b64pad(x)), byteorder='big')
+    y = int.from_bytes(base64.urlsafe_b64decode(b64pad(y)), byteorder='big')
     new_key = ECC.construct(curve='P-256', point_x=x, point_y=y)
     pubKey = new_key.public_key().export_key(format="PEM")+"\n"
     pubkeyName = "kid_"+str(kid)+"_"+str(nowtime)+".pem"
@@ -1127,30 +1046,8 @@ def genECPubFromJWKS(x, y, kid, nowtime):
     return pubkeyName
 
 def genRSAPubFromJWKS(n, e, kid, nowtime):
-    try:
-        n = int.from_bytes(base64.urlsafe_b64decode(n), byteorder='big')
-    except:
-        pass
-    try:
-        n = int.from_bytes(base64.urlsafe_b64decode(n+"="), byteorder='big')
-    except:
-        pass
-    try:
-        n = int.from_bytes(base64.urlsafe_b64decode(n+"=="), byteorder='big')
-    except:
-        pass
-    try:
-        e = int.from_bytes(base64.urlsafe_b64decode(e), byteorder='big')
-    except:
-        pass
-    try:
-        e = int.from_bytes(base64.urlsafe_b64decode(e+"="), byteorder='big')
-    except:
-        pass
-    try:
-        e = int.from_bytes(base64.urlsafe_b64decode(e+"=="), byteorder='big')
-    except:
-        pass
+    n = int.from_bytes(base64.urlsafe_b64decode(b64pad(n)), byteorder='big')
+    e = int.from_bytes(base64.urlsafe_b64decode(b64pad(e)), byteorder='big')
     new_key = RSA.construct((n, e))
     pubKey = new_key.publickey().exportKey(format="PEM")
     pubkeyName = "kid_"+str(kid)+"_"+str(nowtime)+".pem"
