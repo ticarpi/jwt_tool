@@ -1,7 +1,7 @@
 # The JSON Web Token Toolkit v2
 >*jwt_tool.py* is a toolkit for validating, forging, scanning and tampering JWTs (JSON Web Tokens).  
 
-![jwt_tool version](https://img.shields.io/badge/version-v2.2.2-blue) ![python version](https://img.shields.io/badge/python-v3.6+-green)
+![jwt_tool version](https://img.shields.io/badge/version-v2.2.4-blue) ![python version](https://img.shields.io/badge/python-v3.6+-green)
 
 ![logo](https://user-images.githubusercontent.com/19988419/100555535-18598280-3294-11eb-80ed-ca5a0c3455d6.png)
 
