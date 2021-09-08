@@ -93,3 +93,4 @@ jwt
 jwt-secret
 hmac-secret
 hs256-secret
+AC8d83&21Almnis710sds
