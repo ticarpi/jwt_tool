@@ -527,7 +527,7 @@ def signingToken(newheadDict, newpaylDict):
 def checkSig(sig, contents, key):
     quiet = False
     if key == "":
-        cprintc("Type in the key to test", white)
+        cprintc("Type in the key to test", "white")
         key = input("> ")
     testKey(key.encode(), sig, contents, headDict, quiet)
 
