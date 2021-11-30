@@ -1876,12 +1876,15 @@ if __name__ == '__main__':
                         help="Query a token ID against the logfile to see the details of that request\ne.g. -Q jwttool_46820e62fe25c10a3f5498e426a9f03a")
     parser.add_argument("-v", "--verbose", action="store_true",
                         help="When parsing and printing, produce (slightly more) verbose output.")
+    parser.add_argument("-cfg", "--config", action="store",
+            help="Location of the config file(default: ./jwtconf.ini)", default="./jwtconf.ini")
+    parser.add_argument("-l", "--logfile", action="store",
+            help="Location of the log file(default: ./logs.txt)", default="./logs.txt")
     args = parser.parse_args()
     if not args.bare:
         printLogo()
-    path = sys.path[0]
-    logFilename = path+"/logs.txt"
-    configFileName = path+"/jwtconf.ini"
+    logFilename = args.logfile
+    configFileName = args.config
     config = configparser.ConfigParser()
     if (os.path.isfile(configFileName)):
         config.read(configFileName)
@@ -1890,8 +1893,12 @@ if __name__ == '__main__':
         createConfig()
     if config['services']['jwt_tool_version'] != jwttoolvers:
         cprintc("Config file showing wrong version ("+config['services']['jwt_tool_version']+" vs "+jwttoolvers+")", "red")
-        cprintc("Current config file has been backed up as '"+path+"/old_("+config['services']['jwt_tool_version']+")_jwtconf.ini' and a new config generated.\nPlease review and manually transfer any custom options you have set.", "red")
-        os.rename(configFileName, path+"/old_("+config['services']['jwt_tool_version']+")_jwtconf.ini")
+
+        backupLoc=os.path.basename(configFileName)
+        backupCfgPath = backupLoc+"./old_("+config['services']['jwt_tool_version']+")_jwtconf.ini"
+
+        cprintc("Current config file has been backed up as '"+backupCfgPath+"' and a new config generated.\nPlease review and manually transfer any custom options you have set.", "red")
+        os.rename(configFileName, backupCfgPath) 
         createConfig()
         exit(1)
     with open('null.txt', 'w') as nullfile:
