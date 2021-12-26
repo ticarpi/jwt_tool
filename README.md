@@ -84,7 +84,8 @@ All modes now allow for sending the token directly to an application.
 You need to specify:  
 * target URL (-t)
 * a request header (-rh) or request cookies (-rc) that are needed by the application (***at least one must contain the token***)
-* (optional) any POST data (where the request is a POST)
+* (optional) any POST data, (-pd) where the request is a POST
+* (optional) any GET data, (-gd) where the request is a GET (include characters such as `?` and `&` in target URL)
 * (optional) any additional jwt_tool options, such as modes or tampering/injection options  
 * (optional) a *canary value* (-cv) - a text value you expect to see in a successful use of the token (e.g. "Welcome, ticarpi")  
 An example request might look like this (using scanning mode for forced-errors):  
