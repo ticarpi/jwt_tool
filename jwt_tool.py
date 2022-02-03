@@ -17,6 +17,7 @@ import hmac
 import base64
 import json
 import random
+import tempfile
 import argparse
 from datetime import datetime
 import configparser
@@ -977,38 +978,37 @@ def parseJWKS(jwksfile):
     try:
         keyLen = len(jwksDict["keys"])
         cprintc("Number of keys: "+str(keyLen), "cyan")
-        i = -1
-        valid = False
-        for jkey in range(0,keyLen):
-            i += 1
+        kid_bak = 1
+        any1valid = False
+        for d in jwksDict["keys"]:
             cprintc("\n--------", "white")
-            try:
-                cprintc("Key "+str(i+1), "cyan")
-                kid = str(jwksDict["keys"][i]["kid"])
-                cprintc("kid: "+kid, "cyan")
-            except:
-                kid = i
-                cprintc("Key "+str(i+1), "cyan")
-            for keyVal in jwksDict["keys"][i].items():
-                keyVal = keyVal[0]
-                cprintc("[+] "+keyVal+" = "+str(jwksDict["keys"][i][keyVal]), "green")
-            parseSingleJWK(jwksDict["keys"][i], kid=i)
-    except:
+            if 'kid' in d:
+                kid = str(d["kid"])
+            else:
+                kid = kid_bak
+                kid_bak += 1
+            cprintc(f"Key kid {kid}", "cyan")
+            for k, v in d.items():
+                cprintc(f"[+] {k} = {v}", "green")
+            if parseSingleJWK(d, nowtime, kid=kid):
+                any1valid = True
+        return any1valid
+    except ValueError:
         cprintc("Single key file", "white")
         for jkey in jwksDict:
             cprintc("[+] "+jkey+" = "+str(jwksDict[jkey]), "green")
-        parseSingleJWK(jwksDict)
+        return parseSingleJWK(jwksDict, nowtime)
 
-def parseSingleJWK(jwksDict, kid=1):
+def parseSingleJWK(jwksDict, nowtime, kid=1):
         try:
             x = str(jwksDict["x"])
             y = str(jwksDict["y"])
             cprintc("\nFound ECC key factors, generating a public key", "cyan")
-            pubkeyName = genECPubFromJWKS(x, y, kid, nowtime)
+            pubkeyName = genECPubFromJWKS(x, y, kid, nowtime, curve=jwksDict.get('crv'))
             cprintc("[+] "+pubkeyName, "green")
             cprintc("\nAttempting to verify token using "+pubkeyName, "cyan")
-            valid = verifyTokenEC(headDict, paylDict, sig, pubkeyName)
-        except:
+            return verifyTokenEC(headDict, paylDict, sig, pubkeyName)
+        except KeyError:
             pass
         try:
             n = str(jwksDict["n"])
@@ -1017,14 +1017,14 @@ def parseSingleJWK(jwksDict, kid=1):
             pubkeyName = genRSAPubFromJWKS(n, e, kid, nowtime)
             cprintc("[+] "+pubkeyName, "green")
             cprintc("\nAttempting to verify token using "+pubkeyName, "cyan")
-            valid = verifyTokenRSA(headDict, paylDict, sig, pubkeyName)
+            return verifyTokenRSA(headDict, paylDict, sig, pubkeyName)
         except:
             pass
 
-def genECPubFromJWKS(x, y, kid, nowtime):
+def genECPubFromJWKS(x, y, kid, nowtime, curve=None):
     x = int.from_bytes(base64.urlsafe_b64decode(b64pad(x)), byteorder='big')
     y = int.from_bytes(base64.urlsafe_b64decode(b64pad(y)), byteorder='big')
-    new_key = ECC.construct(curve='P-256', point_x=x, point_y=y)
+    new_key = ECC.construct(curve=curve or 'P-256', point_x=x, point_y=y)
     pubKey = new_key.public_key().export_key(format="PEM")+"\n"
     pubkeyName = "kid_"+str(kid)+"_"+str(nowtime)+".pem"
     with open(pubkeyName, 'w') as test_pub_out:
@@ -1668,8 +1668,20 @@ def runActions():
             else:
                 cprintc("Algorithm not supported for verification", "red")
                 exit(1)
+
         elif args.jwksfile:
             parseJWKS(config['crypto']['jwks'])
+
+        elif args.jwksurl:
+            resp = requests.get(args.jwksurl)
+            assert resp.ok
+
+            with tempfile.NamedTemporaryFile() as tmp:
+                tmp.write(resp.content)
+                tmp.flush()
+                tmp.seek(0)
+                valid = parseJWKS(tmp.name)
+                exit(0 if valid else 1)
         else:
             cprintc("No Public Key or JWKS file provided (-pk/-jw)\n", "red")
             parser.print_usage()
@@ -1786,8 +1798,6 @@ if __name__ == '__main__':
         os.rename(configFileName, path+"/old_("+config['services']['jwt_tool_version']+")_jwtconf.ini")
         createConfig()
         exit(1)
-    with open(path+"/null.txt", 'w') as nullfile:
-        pass
     findJWT = ""
     if args.targeturl:
         if args.cookies or args.headers or args.postdata:
