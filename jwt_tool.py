@@ -908,16 +908,20 @@ def verifyTokenEC(headDict, paylDict, sig, pubKey):
             sig = base64.b64decode(b64pad(sig))
         except ValueError:
             cprintc("Signature not Base64 encoded HEX", "red")
+
     if headDict['alg'] == "ES256":
-        h = SHA256.new(message)
+        h, curvename = SHA256.new(message), 'P-256'
     elif headDict['alg'] == "ES384":
-        h = SHA384.new(message)
+        h, curvename = SHA384.new(message), 'P-384'
     elif headDict['alg'] == "ES512":
-        h = SHA512.new(message)
+        h, curvename = SHA512.new(message), 'P-521'
     else:
         cprintc("Invalid ECDSA algorithm", "red")
     pubkey = open(pubKey, "r")
     pub_key = ECC.import_key(pubkey.read())
+    cprintc("[ ] loaded ECC pubkey on the curve {}".format(pub_key.curve), "cyan")
+    assert pub_key.curve == 'NIST ' + curvename, "Key on unexpected curve loaded"
+
     verifier = DSS.new(pub_key, 'fips-186-3')
     try:
         verifier.verify(h, sig)
