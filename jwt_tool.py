@@ -920,10 +920,10 @@ def verifyTokenEC(headDict, paylDict, sig, pubKey):
     pub_key = ECC.import_key(pubkey.read())
     verifier = DSS.new(pub_key, 'fips-186-3')
     try:
-        verifier.verify(h, signature)
+        verifier.verify(h, sig)
         cprintc("ECC Signature is VALID", "green")
         valid = True
-    except:
+    except ValueError:
         cprintc("ECC Signature is INVALID", "red")
         valid = False
     return valid
