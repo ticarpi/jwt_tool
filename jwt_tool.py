@@ -971,14 +971,14 @@ def exportJWKS(jku):
     return newContents, newSig
 
 def parseJWKS(jwksfile):
-    jwks = open(jwksfile, "r").read()
-    jwksDict = json.loads(jwks, object_pairs_hook=OrderedDict)
+    jwksDict = json.load(open(jwksfile, 'r'), object_pairs_hook=OrderedDict)
     nowtime = int(datetime.now().timestamp())
     cprintc("JWKS Contents:", "cyan")
     try:
         keyLen = len(jwksDict["keys"])
         cprintc("Number of keys: "+str(keyLen), "cyan")
         i = -1
+        valid = False
         for jkey in range(0,keyLen):
             i += 1
             cprintc("\n--------", "white")
@@ -992,32 +992,15 @@ def parseJWKS(jwksfile):
             for keyVal in jwksDict["keys"][i].items():
                 keyVal = keyVal[0]
                 cprintc("[+] "+keyVal+" = "+str(jwksDict["keys"][i][keyVal]), "green")
-            try:
-                x = str(jwksDict["keys"][i]["x"])
-                y = str(jwksDict["keys"][i]["y"])
-                cprintc("\nFound ECC key factors, generating a public key", "cyan")
-                pubkeyName = genECPubFromJWKS(x, y, kid, nowtime)
-                cprintc("[+] "+pubkeyName, "green")
-                cprintc("\nAttempting to verify token using "+pubkeyName, "cyan")
-                valid = verifyTokenEC(headDict, paylDict, sig, pubkeyName)
-            except:
-                pass
-            try:
-                n = str(jwksDict["keys"][i]["n"])
-                e = str(jwksDict["keys"][i]["e"])
-                cprintc("\nFound RSA key factors, generating a public key", "cyan")
-                pubkeyName = genRSAPubFromJWKS(n, e, kid, nowtime)
-                cprintc("[+] "+pubkeyName, "green")
-                cprintc("\nAttempting to verify token using "+pubkeyName, "cyan")
-                valid = verifyTokenRSA(headDict, paylDict, sig, pubkeyName)
-            except:
-                pass
+            parseSingleJWK(jwksDict["keys"][i], kid=i)
     except:
         cprintc("Single key file", "white")
         for jkey in jwksDict:
             cprintc("[+] "+jkey+" = "+str(jwksDict[jkey]), "green")
+        parseSingleJWK(jwksDict)
+
+def parseSingleJWK(jwksDict, kid=1):
         try:
-            kid = 1
             x = str(jwksDict["x"])
             y = str(jwksDict["y"])
             cprintc("\nFound ECC key factors, generating a public key", "cyan")
@@ -1028,7 +1011,6 @@ def parseJWKS(jwksfile):
         except:
             pass
         try:
-            kid = 1
             n = str(jwksDict["n"])
             e = str(jwksDict["e"])
             cprintc("\nFound RSA key factors, generating a public key", "cyan")
