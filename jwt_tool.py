@@ -978,15 +978,13 @@ def parseJWKS(jwksfile):
     try:
         keyLen = len(jwksDict["keys"])
         cprintc("Number of keys: "+str(keyLen), "cyan")
-        kid_bak = 1
+        kids_seen = set()
+        new_kid = lambda: 1 + max([x for x in kids_seen if isinstance(x, int)], default=0)
         any1valid = False
         for d in jwksDict["keys"]:
             cprintc("\n--------", "white")
-            if 'kid' in d:
-                kid = str(d["kid"])
-            else:
-                kid = kid_bak
-                kid_bak += 1
+            kid = d['kid'] if 'kid' in d else new_kid()
+            kids_seen.add(kid)
             cprintc(f"Key kid {kid}", "cyan")
             for k, v in d.items():
                 cprintc(f"[+] {k} = {v}", "green")
