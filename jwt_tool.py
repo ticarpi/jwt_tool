@@ -1323,6 +1323,8 @@ def rejigToken(headDict, paylDict, sig):
             claimnum += 1
     if expiredtoken:
         cprintc("[-] TOKEN IS EXPIRED!", "red")
+    if 'exp' not in comparestamps:
+        cprintc("[-] Token does not have an expiry set.", "red")
     cprintc("\n----------------------\nJWT common timestamps:\niat = IssuedAt\nexp = Expires\nnbf = NotBefore\n----------------------\n", "white")
     if args.targeturl and not args.crack and not args.exploit and not args.verify and not args.tamper and not args.sign:
         cprintc("[+] Sending token", "cyan")
