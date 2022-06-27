@@ -26,6 +26,9 @@ Super Secret Key
 THE_SAME_HMAC_KEY
 ThisIsMySuperSecret
 XYZ
+crapi
+jwt_PassKey
+Jwt_passKey
 YOUR_HMAC_KEY
 YoUR sUpEr S3krEt 1337 HMAC kEy HeRE
 ]V@IaC1%fU,DrVI
