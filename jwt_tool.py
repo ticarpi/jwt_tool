@@ -771,6 +771,7 @@ def jwksEmbed(newheadDict, newpaylDict):
     newjwks = buildJWKS(n, e, "jwt_tool")
     newHead["jwk"] = newjwks
     newHead["alg"] = "RS256"
+    newHead["kid"] = newjwks["kid"]
     key = privKey
     # key = RSA.importKey(privKey)
     newContents = genContents(newHead, newpaylDict)
