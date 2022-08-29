@@ -671,7 +671,7 @@ def testKey(key, sig, contents, headDict, quiet):
             cprintc("[+] CORRECT key found:\n"+key.decode('UTF-8'), "green")
         else:
             cprintc("[+] "+key.decode('UTF-8')+" is the CORRECT key!", "green")
-        cprintc("You can tamper/fuzz the token contents (-T/-I) and sign it using:\npython3 jwt_tool.py [options here] -S "+str(headDict["alg"])+" -p \""+key.decode('UTF-8')+"\"", "cyan")
+        cprintc("You can tamper/fuzz the token contents (-T/-I) and sign it using:\npython3 jwt_tool.py [options here] -S "+str(headDict["alg"]).lower()+" -p \""+key.decode('UTF-8')+"\"", "cyan")
         return cracked
     else:
         cracked = False
