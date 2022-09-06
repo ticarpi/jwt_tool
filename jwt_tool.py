@@ -99,6 +99,7 @@ def createConfig():
         'jwks': jwksName}
     config['services'] = {'jwt_tool_version': jwttoolvers,
         '# To disable the proxy option set this value to: False (no quotes). For Docker installations with a Windows host OS set this to: "host.docker.internal:8080"': None, 'proxy': proxyHost+':8080',
+        '# To disable following redirects set this value to: False (no quotes)': None, 'redir': 'True',
         '# Set this to the URL you are hosting your custom JWKS file (jwttool_custom_jwks.json) - your own server, or maybe use this cheeky reflective URL (https://httpbin.org/base64/{base64-encoded_JWKS_here})': None,
         'jwksloc': 'https://httpbin.org/base64/'+jwks_b64.decode(),
         '# Set this to the base URL of a Collaborator server, somewhere you can read live logs, a Request Bin etc.': None, 'httplistener': ''}
@@ -144,17 +145,21 @@ def sendToken(token, cookiedict, track, headertoken="", postdata=None):
             headerName, headerVal = eachHeader.split(":",1)
             headers[headerName] = headerVal.lstrip(" ")
     try:
+        if config['services']['redir'] == "True":
+            redirBool = True
+        else:
+            redirBool = False
         if config['services']['proxy'] == "False":
             if postdata:
-                response = requests.post(url, data=postdata, headers=headers, cookies=cookiedict, proxies=False, verify=False)
+                response = requests.post(url, data=postdata, headers=headers, cookies=cookiedict, proxies=False, verify=False, allow_redirects=redirBool)
             else:
-                response = requests.get(url, headers=headers, cookies=cookiedict, proxies=False, verify=False)
+                response = requests.get(url, headers=headers, cookies=cookiedict, proxies=False, verify=False, allow_redirects=redirBool)
         else:
             proxies = {'http': 'http://'+config['services']['proxy'], 'https': 'http://'+config['services']['proxy']}
             if postdata:
-                response = requests.post(url, data=postdata, headers=headers, cookies=cookiedict, proxies=proxies, verify=False)
+                response = requests.post(url, data=postdata, headers=headers, cookies=cookiedict, proxies=proxies, verify=False, allow_redirects=redirBool)
             else:
-                response = requests.get(url, headers=headers, cookies=cookiedict, proxies=proxies, verify=False)
+                response = requests.get(url, headers=headers, cookies=cookiedict, proxies=proxies, verify=False, allow_redirects=redirBool)
         if int(response.elapsed.total_seconds()) >= 9:
             cprintc("HTTP response took about 10 seconds or more - could be a sign of a bug or vulnerability", "cyan")
         return [response.status_code, len(response.content), response.content]
@@ -225,9 +230,9 @@ def jwtOut(token, fromMod, desc=""):
         except:
             cookiedict = {}
 
-        
 
-        # Check if token was included in substitution 
+
+        # Check if token was included in substitution
         if cookietoken[1] == 1 or headertoken[1] == 1 or posttoken[1]:
             resData = sendToken(token, cookiedict, logID, headertoken[0], posttoken[0])
         else:
@@ -717,7 +722,7 @@ def signTokenHS(headDict, paylDict, key, hashLength):
         newSig = base64.urlsafe_b64encode(hmac.new(key.encode(),newContents.encode(),hashlib.sha256).digest()).decode('UTF-8').strip("=")
     return newSig, newContents
 
-def buildJWKS(n, e, kid):                                       
+def buildJWKS(n, e, kid):
     newjwks = {}
     newjwks["kty"] = "RSA"
     newjwks["kid"] = kid
@@ -1277,7 +1282,7 @@ def rejigToken(headDict, paylDict, sig):
                     cprintc("    [+] "+subclaim+" = null", "green")
                 elif headDict[claim][subclaim] == True:
                     cprintc("    [+] "+subclaim+" = true", "green")
-                elif headDict[claim][subclaim] == False: 
+                elif headDict[claim][subclaim] == False:
                     cprintc("    [+] "+subclaim+" = false", "green")
                 elif type(headDict[claim][subclaim]) == str:
                     cprintc("    [+] "+subclaim+" = \""+str(headDict[claim][subclaim])+"\"", "green")
@@ -1397,7 +1402,7 @@ def scanModePlaybook():
     newSig, newContents = signTokenHS(headDict, paylDict, key, 256)
     jwtBlankPw = newContents+"."+newSig
     jwtOut(jwtBlankPw, "Exploit: Blank password accepted in signature (-X b)", "This token can exploit a hard-coded blank password in the config")
-    # Exploit: null signature      
+    # Exploit: null signature
     jwtNull = checkNullSig(contents)
     jwtOut(jwtNull, "Exploit: Null signature (-X n)", "This token was sent to check if a null signature can bypass checks")
     # Exploit: alg:none
@@ -1475,7 +1480,7 @@ def scanModePlaybook():
     key = "1"
     newSig, newContents = signTokenHS(newheadDict, paylDict, key, 256)
     jwtOut(newContents+"."+newSig, "Injected kid claim - signed with secret = '1' from SQLi")
-    # kid testing... end  
+    # kid testing... end
     if origkid:
         headDict["kid"] = origkid
     else:
@@ -1556,7 +1561,7 @@ def scanModeCommonClaims():
     injectCommonClaims(False)
     injectCommonClaims("jwt_tool")
     injectCommonClaims(0)
-    
+
     cprintc("Scanning mode completed: review the above results.\n", "magenta")
 
 def injectCommonClaims(contentVal):
@@ -1738,7 +1743,7 @@ def runExploits():
                 if config['services']['jwksloc'] == args.jwksurl:
                     cprintc("Paste this JWKS into a file at the following location before submitting token request: "+jku+"\n(JWKS file used: "+config['crypto']['jwks']+")\n"+str(config['crypto']['jwks'])+"", "cyan")
                 desc = "Signed with JWKS at "+config['services']['jwksloc']
-                jwtOut(newContents+"."+newSig, "Spoof JWKS", desc)          
+                jwtOut(newContents+"."+newSig, "Spoof JWKS", desc)
                 # exit(1)
             else:
                 cprintc("No URL provided to spoof the JWKS (-u)\n", "red")
@@ -1837,6 +1842,8 @@ if __name__ == '__main__':
                         help="text string that appears in response for valid token (e.g. \"Welcome, ticarpi\")")
     parser.add_argument("-np", "--noproxy", action="store_true",
                         help="disable proxy for current request (change in jwtconf.ini if permanent)")
+    parser.add_argument("-nr", "--noredir", action="store_true",
+                        help="disable redirects for current request (change in jwtconf.ini if permanent)")
     parser.add_argument("-M", "--mode", action="store",
                         help="Scanning mode:\npb = playbook audit\ner = fuzz existing claims to force errors\ncc = fuzz common claims\nat - All Tests!")
     parser.add_argument("-X", "--exploit", action="store",
@@ -2030,6 +2037,9 @@ if __name__ == '__main__':
         config['argvals']['canaryvalue'] = args.canaryvalue
     if args.noproxy:
         config['services']['proxy'] = "False"
+    if args.noredir:
+        config['services']['redir'] = "False"
+
     if not args.crack and not args.exploit and not args.verify and not args.tamper and not args.injectclaims:
         rejigToken(headDict, paylDict, sig)
         if args.sign:
