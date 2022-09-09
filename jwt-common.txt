@@ -88,7 +88,6 @@ your-384-bit-secret
 your-512-bit-secret
 your-own-jwt-secret
 your-top-secret-key
-㕋⬏ꖼ荾٥睻ꚏ媳⣦줨ꤏ蒲퉐⺿폻媒툆䟯隊듃睢㴢㴮ⅲԮ伈샍髵某肣
 jwt
 jwt-secret
 hmac-secret
