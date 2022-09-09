@@ -1743,15 +1743,6 @@ def runExploits():
         elif args.exploit == "s":
             if config['services']['jwksloc']:
                 jku = config['services']['jwksloc']
-<<<<<<< Updated upstream
-                newContents, newSig = exportJWKS(jku)
-                if config['services']['jwksloc'] == args.jwksurl:
-                    cprintc("Paste this JWKS into a file at the following location before submitting token request: "+jku+"\n(JWKS file used: "+config['crypto']['jwks']+")\n"+str(config['crypto']['jwks'])+"", "cyan")
-                desc = "Signed with JWKS at "+config['services']['jwksloc']
-                jwtOut(newContents+"."+newSig, "Spoof JWKS", desc)
-                # exit(1)
-=======
->>>>>>> Stashed changes
             else:
                 jku = config['services']['jwksdynamic']
             newContents, newSig = exportJWKS(jku)
@@ -1759,7 +1750,6 @@ def runExploits():
                 cprintc("Paste this JWKS into a file at the following location before submitting token request: "+jku+"\n(JWKS file used: "+config['crypto']['jwks']+")\n"+str(config['crypto']['jwks'])+"", "cyan")
             desc = "Signed with JWKS at "+jku
             jwtOut(newContents+"."+newSig, "Spoof JWKS", desc)
-            parser.print_usage()
             # exit(1)
         elif args.exploit == "k":
             if config['crypto']['pubkey']:
