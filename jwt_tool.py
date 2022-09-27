@@ -143,8 +143,9 @@ def sendToken(token, cookiedict, track, headertoken="", postdata=None):
     headers = {'User-agent': config['customising']['useragent']+" "+track}
     if headertoken:
         for eachHeader in headertoken:
-            headerName, headerVal = eachHeader.split(":",1)
-            headers[headerName] = headerVal.lstrip(" ")
+            if eachHeader.replace(' ','') != "":
+                headerName, headerVal = eachHeader.split(":",1)
+                headers[headerName] = headerVal.lstrip(" ")
     try:
         if config['services']['redir'] == "True":
             redirBool = True
