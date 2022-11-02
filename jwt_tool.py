@@ -1511,11 +1511,11 @@ def scanModePlaybook():
     cprintc("Scanning mode completed: review the above results.\n", "magenta")
     # Further manual testing: check expired token, brute key, find Public Key, run other scans
     cprintc("The following additional checks should be performed that are better tested manually:", "magenta")
-    if headDict['alg'][:2] == "HS" or headDict['alg'][:2] == "hs":
-        cprintc("[+] Try testing "+headDict['alg'][:2]+" token against weak password configurations by running the following hashcat cracking options:", "green")
+    if origalg[:2] == "HS" or origalg[:2] == "hs":
+        cprintc("[+] Try testing "+origalg[:2]+" token against weak password configurations by running the following hashcat cracking options:", "green")
         cprintc("(Already testing against passwords in jwt-common.txt)", "cyan")
         cprintc("Try using longer dictionaries, custom dictionaries, mangling rules, or brute force attacks.\nhashcat (https://hashcat.net/hashcat/) is ideal for this as it is highly optimised for speed. Just add your JWT to a text file, then use the following syntax to give you a good start:\n\n[*] dictionary attacks: hashcat -a 0 -m 16500 jwt.txt passlist.txt\n[*] rule-based attack:  hashcat -a 0 -m 16500 jwt.txt passlist.txt -r rules/best64.rule\n[*] brute-force attack: hashcat -a 3 -m 16500 jwt.txt ?u?l?l?l?l?l?l?l -i --increment-min=6", "cyan")
-    if headDict['alg'][:2] != "HS" and headDict['alg'][:2] != "hs":
+    if origalg[:2] != "HS" and origalg[:2] != "hs":
         cprintc("[+] Try hunting for a Public Key for this token. Validate any JWKS you find (-V -jw [jwks_file]) and then use the generated Public Key file with the Playbook Scan (-pk [kid_from_jwks].pem)", "green")
         cprintc("Common locations for Public Keys are either the web application's SSL key, or stored as a JWKS file in one of these locations:", "cyan")
         with open('jwks-common.txt', "r", encoding='utf-8', errors='ignore') as jwksLst:
