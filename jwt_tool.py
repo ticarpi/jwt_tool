@@ -589,7 +589,7 @@ def crackSig(sig, contents):
         cprintc(utf8errors, " UTF-8 incompatible passwords skipped", "cyan")
 
 def castInput(newInput):
-    if "{" in str(newInput):
+    if "{" or "[" in str(newInput):
         try:
             jsonInput = json.loads(newInput)
             return jsonInput
