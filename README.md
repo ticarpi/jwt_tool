@@ -42,7 +42,7 @@ Installation is just a case of downloading the `jwt_tool.py` file (or `git clone
 (`chmod` the file too if you want to add it to your *$PATH* and call it from anywhere.)
 
 `$ git clone https://github.com/ticarpi/jwt_tool`  
-`$ python3 -m pip install termcolor cprint pycryptodomex requests`  
+`$ pip3 install -r requirements.txt`  
 
 On first run the tool will generate a config file, some utility files, logfile, and a set of Public and Private keys in various formats.  
 
