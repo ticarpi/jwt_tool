@@ -1884,7 +1884,11 @@ if __name__ == '__main__':
     if not args.bare:
         printLogo()
     try:
-        path = os.path.expanduser("~/.jwt_tool")
+        xdg_config_home = os.environ.get("XDG_CONFIG_HOME", False)
+        if xdg_config_home:
+            path = os.path.expanduser(os.path.normpath(xdg_config_home + "/jwt_tool"))
+        else:
+            path = os.path.expanduser("~/.jwt_tool")
         if not os.path.exists(path):
             os.makedirs(path)
     except:
