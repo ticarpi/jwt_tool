@@ -1919,22 +1919,38 @@ if __name__ == '__main__':
             url = first_line_remainder.split(' ', 1)[0]
             base_url = ''
         
+            in_headers = True
+            args.postdata = ''
+
             for line in file:
+                
                 line = line.strip()
                 if not line:
                     # Stop when reaching an empty line (end of headers)
-                    break
+                    in_headers = False
+                    continue
 
-                if line.lower().startswith('host:'):
-                    # Extract the host from the 'Host' header
-                    _, host = line.split(':', 1)
-                    host = host.strip()
-                    
-                    if ':' in host:
-                        host, port = host.split(':', 1)
+                if in_headers:
+                    if line.lower().startswith('host:'):
+                        # Extract the host from the 'Host' header
+                        _, host = line.split(':', 1)
+                        host = host.strip()
+                        
+                        if ':' in host:
+                            host, port = host.split(':', 1)
 
-                    base_url = f"https://{host}"
-                    break
+                        base_url = f"https://{host}"
+                    elif line.lower().startswith('cookie:'):
+                        cookie = line.lower().split(': ')[0]
+                        if not args.cookies:
+                            args.cookies = []
+                        args.cookies.append(cookie)
+                    else:
+                        if not args.headers:
+                            args.headers = []
+                        args.headers.append(line)
+                else:
+                    args.postdata += line
 
             if not port:
                 url_object = urlparse(url)
@@ -1942,8 +1958,7 @@ if __name__ == '__main__':
                     port = str(url_object.port)
 
         absolute_url = urljoin(base_url + (':' + port if port else ''), url)
-        print(absolute_url)
-        exit()
+        args.targeturl = absolute_url
 
     if args.targeturl:
         if args.cookies or args.headers or args.postdata:
