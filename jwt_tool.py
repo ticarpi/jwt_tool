@@ -17,6 +17,7 @@ import hmac
 import base64
 import json
 import random
+from urllib.parse import urljoin, urlparse
 import argparse
 from datetime import datetime
 import configparser
@@ -1908,6 +1909,42 @@ if __name__ == '__main__':
     with open(path+"/null.txt", 'w') as nullfile:
         pass
     findJWT = ""
+
+    if args.request:
+        port = ''
+
+        with open(args.request, 'r') as file:
+            first_line = file.readline().strip()
+            method, first_line_remainder = first_line.split(' ', 1)
+            url = first_line_remainder.split(' ', 1)[0]
+            base_url = ''
+        
+            for line in file:
+                line = line.strip()
+                if not line:
+                    # Stop when reaching an empty line (end of headers)
+                    break
+
+                if line.lower().startswith('host:'):
+                    # Extract the host from the 'Host' header
+                    _, host = line.split(':', 1)
+                    host = host.strip()
+                    
+                    if ':' in host:
+                        host, port = host.split(':', 1)
+
+                    base_url = f"https://{host}"
+                    break
+
+            if not port:
+                url_object = urlparse(url)
+                if url_object.port:
+                    port = str(url_object.port)
+
+        absolute_url = urljoin(base_url + (':' + port if port else ''), url)
+        print(absolute_url)
+        exit()
+
     if args.targeturl:
         if args.cookies or args.headers or args.postdata:
             jwt_count = 0
