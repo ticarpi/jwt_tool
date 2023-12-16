@@ -1828,6 +1828,8 @@ if __name__ == '__main__':
                         help="return TOKENS ONLY")
     parser.add_argument("-t", "--targeturl", action="store",
                         help="URL to send HTTP request to with new JWT")
+    parser.add_argument("-r", "--request", action="store",
+                        help="URL request to base on.")
     parser.add_argument("-rc", "--cookies", action="store",
                         help="request cookies to send with the forged HTTP request")
     parser.add_argument("-rh", "--headers", action="append",
@@ -2035,6 +2037,8 @@ if __name__ == '__main__':
         config['services']['proxy'] = "False"
     if args.noredir:
         config['services']['redir'] = "False"
+    if args.request:
+        config['argvals']['request'] = args.request
 
     if not args.crack and not args.exploit and not args.verify and not args.tamper and not args.injectclaims:
         rejigToken(headDict, paylDict, sig)
