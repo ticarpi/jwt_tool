@@ -1951,9 +1951,11 @@ if __name__ == '__main__':
                             args.cookies = []
                         args.cookies.append(cookie)
                     else:
-                        if not args.headers:
-                            args.headers = []
-                        args.headers.append(line)
+                        # Don't add user agent field, otherwise 'jwt_tool' in user agent will not work
+                        if not line.lower().startswith('user-agent:'):
+                            if not args.headers:
+                                args.headers = []
+                            args.headers.append(line)
                 else:
                     args.postdata += line
 
