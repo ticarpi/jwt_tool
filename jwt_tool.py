@@ -1830,7 +1830,9 @@ if __name__ == '__main__':
     parser.add_argument("-t", "--targeturl", action="store",
                         help="URL to send HTTP request to with new JWT")
     parser.add_argument("-r", "--request", action="store",
-                        help="URL request to base on.")
+                        help="URL request to base on")
+    parser.add_argument("-i", "--insecure", action="store_true",
+                        help="Use HTTP for passed request")
     parser.add_argument("-rc", "--cookies", action="store",
                         help="request cookies to send with the forged HTTP request")
     parser.add_argument("-rh", "--headers", action="append",
@@ -1939,7 +1941,10 @@ if __name__ == '__main__':
                         if ':' in host:
                             host, port = host.split(':', 1)
 
-                        base_url = f"https://{host}"
+                        protocol = "http" if args.insecure else "https"
+
+                        base_url = f"{protocol}://{host}"
+                        
                     elif line.lower().startswith('cookie:'):
                         cookie = line.lower().split(': ')[0]
                         if not args.cookies:
