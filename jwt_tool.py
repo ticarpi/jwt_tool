@@ -1946,10 +1946,10 @@ if __name__ == '__main__':
                         base_url = f"{protocol}://{host}"
                         
                     elif line.lower().startswith('cookie:'):
-                        cookie = line.lower().split(': ')[0]
+                        cookie = line.split(': ')[1]
                         if not args.cookies:
-                            args.cookies = []
-                        args.cookies.append(cookie)
+                            args.cookies = ''
+                        args.cookies += cookie
                     else:
                         # Don't add user agent field, otherwise 'jwt_tool' in user agent will not work
                         if not line.lower().startswith('user-agent:'):
@@ -2017,7 +2017,7 @@ if __name__ == '__main__':
                 str(args.headers),
                 str(args.postdata)
             ])
-
+            
             try:
                 findJWT = re.search('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', searchString)[0]
             except:
