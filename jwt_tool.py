@@ -1433,10 +1433,10 @@ def scanModePlaybook():
         origjku = headDict["jku"]
     except:
         origjku = False
-        if config['services']['jwksloc']:
-            jku = config['services']['jwksloc']
-        else:
-            jku = config['services']['jwksdynamic']
+    if config['services']['jwksloc']:
+        jku = config['services']['jwksloc']
+    else:
+        jku = config['services']['jwksdynamic']
     newContents, newSig = exportJWKS(jku)
     jwtOut(newContents+"."+newSig, "Exploit: Spoof JWKS (-X s)", "Signed with JWKS at "+jku)
     if origjku:
