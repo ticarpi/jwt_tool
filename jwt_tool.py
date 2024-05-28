@@ -17,6 +17,7 @@ import hmac
 import base64
 import json
 import random
+from urllib.parse import urljoin, urlparse
 import argparse
 from datetime import datetime
 import configparser
@@ -1828,6 +1829,10 @@ if __name__ == '__main__':
                         help="return TOKENS ONLY")
     parser.add_argument("-t", "--targeturl", action="store",
                         help="URL to send HTTP request to with new JWT")
+    parser.add_argument("-r", "--request", action="store",
+                        help="URL request to base on")
+    parser.add_argument("-i", "--insecure", action="store_true",
+                        help="Use HTTP for passed request")
     parser.add_argument("-rc", "--cookies", action="store",
                         help="request cookies to send with the forged HTTP request")
     parser.add_argument("-rh", "--headers", action="append",
@@ -1906,6 +1911,62 @@ if __name__ == '__main__':
     with open(path+"/null.txt", 'w') as nullfile:
         pass
     findJWT = ""
+
+    if args.request:
+        port = ''
+
+        with open(args.request, 'r') as file:
+            first_line = file.readline().strip()
+            method, first_line_remainder = first_line.split(' ', 1)
+            url = first_line_remainder.split(' ', 1)[0]
+            base_url = ''
+        
+            in_headers = True
+            args.postdata = ''
+
+            for line in file:
+                
+                line = line.strip()
+                if not line:
+                    # Stop when reaching an empty line (end of headers)
+                    in_headers = False
+                    continue
+
+                if in_headers:
+                    if line.lower().startswith('host:'):
+                        # Extract the host from the 'Host' header
+                        _, host = line.split(':', 1)
+                        host = host.strip()
+                        
+                        if ':' in host:
+                            host, port = host.split(':', 1)
+
+                        protocol = "http" if args.insecure else "https"
+
+                        base_url = f"{protocol}://{host}"
+                        
+                    elif line.lower().startswith('cookie:'):
+                        cookie = line.split(': ')[1]
+                        if not args.cookies:
+                            args.cookies = ''
+                        args.cookies += cookie
+                    else:
+                        # Don't add user agent field, otherwise 'jwt_tool' in user agent will not work
+                        if not line.lower().startswith('user-agent:'):
+                            if not args.headers:
+                                args.headers = []
+                            args.headers.append(line)
+                else:
+                    args.postdata += line
+
+            if not port:
+                url_object = urlparse(url)
+                if url_object.port:
+                    port = str(url_object.port)
+
+        absolute_url = urljoin(base_url + (':' + port if port else ''), url)
+        args.targeturl = absolute_url
+
     if args.targeturl:
         if args.cookies or args.headers or args.postdata:
             jwt_count = 0
@@ -1956,7 +2017,7 @@ if __name__ == '__main__':
                 str(args.headers),
                 str(args.postdata)
             ])
-
+            
             try:
                 findJWT = re.search(r'eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', searchString)[0]
             except:
@@ -2035,6 +2096,8 @@ if __name__ == '__main__':
         config['services']['proxy'] = "False"
     if args.noredir:
         config['services']['redir'] = "False"
+    if args.request:
+        config['argvals']['request'] = args.request
 
     if not args.crack and not args.exploit and not args.verify and not args.tamper and not args.injectclaims:
         rejigToken(headDict, paylDict, sig)
