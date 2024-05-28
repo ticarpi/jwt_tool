@@ -184,7 +184,7 @@ def parse_dict_cookies(value):
 def strip_dict_cookies(value):
     cookiestring = ""
     for item in value.split(';'):
-        if re.search('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', item):
+        if re.search(r'eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', item):
             continue
         else:
             cookiestring += "; "+item
@@ -197,7 +197,7 @@ def jwtOut(token, fromMod, desc=""):
     logID = "jwttool_"+hashlib.md5(idFrag.encode()).hexdigest()
     if config['argvals']['targetUrl'] != "":
         curTargetUrl = config['argvals']['targetUrl']
-        p = re.compile('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*')
+        p = re.compile(r'eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*')
 
         if config['argvals']['headerloc'] == "cookies":
             cookietoken = p.subn(token, config['argvals']['cookies'], 0)
@@ -1341,16 +1341,16 @@ def searchLog(logID):
     with open(logFilename, 'r') as logFile:
         logLine = logFile.readline()
         while logLine:
-            if re.search('^'+logID, logLine):
+            if re.search(r'^'+logID, logLine):
                 qResult = logLine
                 break
             else:
                 logLine = logFile.readline()
         if qResult:
-            qOutput = re.sub(' - eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', '', qResult)
+            qOutput = re.sub(r' - eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', '', qResult)
             qOutput = re.sub(logID+' - ', '', qOutput)
             try:
-                jwt = re.findall('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', qResult)[-1]
+                jwt = re.findall(r'eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', qResult)[-1]
             except:
                 cprintc("JWT not included in log", "red")
                 exit(1)
@@ -1809,15 +1809,15 @@ def runActions():
 
 def printLogo():
     print()
-    print("   \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\ \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\      \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\ \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\  \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\                  \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\ ")
-    print("   \__\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m | \x1b[48;5;24m \x1b[0m\  \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\__\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  __| \__\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  __|                 \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |")
-    print("      \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\ \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |   \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |       \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m | \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\   \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\  \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |")
-    print("      \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\\\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |   \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |       \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  __\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\ \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  __\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\ \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |")
-    print("\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\   \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  _\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |   \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |       \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |  \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |  \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |")
+    print("   \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\\ \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\\      \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\\ \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\\  \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\\                  \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\\ ")
+    print("   \\__\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m | \x1b[48;5;24m \x1b[0m\\  \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\\__\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  __| \\__\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  __|                 \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |")
+    print("      \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\\ \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |   \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |       \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m | \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\\   \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\\  \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |")
+    print("      \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\\\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |   \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |       \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  __\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\\ \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  __\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\\ \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |")
+    print("\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\\   \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  _\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |   \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |       \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |  \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |  \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |")
     print("\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |  \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  / \\\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |   \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |       \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |  \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |  \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |")
     print("\\\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  /   \\\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |   \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |       \x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |\\\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  |\\\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m  |\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m |")
-    print(" \______/ \__/     \__|   \__|\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\\__| \______/  \______/ \__|")
-    print(" \x1b[36mVersion "+jwttoolvers+"          \x1b[0m      \______|             \x1b[36m@ticarpi\x1b[0m      ")
+    print(" \\______/ \\__/     \\__|   \\__|\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\x1b[48;5;24m \x1b[0m\\__| \\______/  \\______/ \\__|")
+    print(" \x1b[36mVersion "+jwttoolvers+"          \x1b[0m      \\______|             \x1b[36m@ticarpi\x1b[0m      ")
     print()
 
 if __name__ == '__main__':
@@ -1911,15 +1911,15 @@ if __name__ == '__main__':
             jwt_count = 0
             jwt_locations = []
 
-            if args.cookies and re.search('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', args.cookies):
+            if args.cookies and re.search(r'eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', args.cookies):
                 jwt_count += 1
                 jwt_locations.append("cookie")
 
-            if args.headers and re.search('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', str(args.headers)):
+            if args.headers and re.search(r'eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', str(args.headers)):
                 jwt_count += 1
                 jwt_locations.append("headers")
 
-            if args.postdata and re.search('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', str(args.postdata)):
+            if args.postdata and re.search(r'eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', str(args.postdata)):
                 jwt_count += 1
                 jwt_locations.append("post data")
 
@@ -1929,7 +1929,7 @@ if __name__ == '__main__':
 
             if args.cookies:
                 try:
-                    if re.search('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', args.cookies):
+                    if re.search(r'eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', args.cookies):
                         config['argvals']['headerloc'] = "cookies"
                 except:
                     cprintc("Invalid cookie formatting", "red")
@@ -1937,7 +1937,7 @@ if __name__ == '__main__':
 
             if args.headers:
                 try:
-                    if re.search('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', str(args.headers)):
+                    if re.search(r'eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', str(args.headers)):
                         config['argvals']['headerloc'] = "headers"
                 except:
                     cprintc("Invalid header formatting", "red")
@@ -1945,7 +1945,7 @@ if __name__ == '__main__':
 
             if args.postdata:
                 try:
-                    if re.search('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', str(args.postdata)):
+                    if re.search(r'eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', str(args.postdata)):
                         config['argvals']['headerloc'] = "postdata"
                 except:
                     cprintc("Invalid postdata formatting", "red")
@@ -1958,7 +1958,7 @@ if __name__ == '__main__':
             ])
 
             try:
-                findJWT = re.search('eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', searchString)[0]
+                findJWT = re.search(r'eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', searchString)[0]
             except:
                 cprintc("Cannot find a valid JWT", "red")
                 cprintc(searchString, "cyan")
