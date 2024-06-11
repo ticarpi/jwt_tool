@@ -590,6 +590,9 @@ def crackSig(sig, contents):
         cprintc(utf8errors, " UTF-8 incompatible passwords skipped", "cyan")
 
 def castInput(newInput):
+    if isinstance(newInput, OrderedDict):
+        newInput = json.dumps(newInput)
+    
     if "{" in str(newInput):
         try:
             jsonInput = json.loads(newInput)
