@@ -1494,9 +1494,9 @@ def scanModePlaybook():
     # x5u external
     # Force External Interactions
     if config['services']['httplistener']:
-        for headerClaim in headDict:
+        for headerClaim in list(headDict):
             injectExternalInteractionHeader(config['services']['httplistener']+"/inject_existing_", headerClaim)
-        for payloadClaim in paylDict:
+        for payloadClaim in list(paylDict):
             injectExternalInteractionPayload(config['services']['httplistener']+"/inject_existing_", payloadClaim)
         cprintc("External service interactions have been tested - check your listener for interactions", "green")
     else:
