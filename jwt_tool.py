@@ -2093,7 +2093,7 @@ if __name__ == '__main__':
     if args.headervalue:
         config['argvals']['headervalue'] = str(args.headervalue)
     if args.postdata:
-        config['argvals']['postData'] = args.postdata
+        config['argvals']['postData'] = args.postdata.replace('%', '%%')
     if args.canaryvalue:
         config['argvals']['canaryvalue'] = args.canaryvalue
     if args.noproxy:
