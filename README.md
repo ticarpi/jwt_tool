@@ -1,7 +1,7 @@
 # The JSON Web Token Toolkit v2
 >*jwt_tool.py* is a toolkit for validating, forging, scanning and tampering JWTs (JSON Web Tokens).  
 
-![jwt_tool version](https://img.shields.io/badge/version-v2.2.6-blue) ![python version](https://img.shields.io/badge/python-v3.6+-green)
+![jwt_tool version](https://img.shields.io/badge/version-v2.2.7-blue) ![python version](https://img.shields.io/badge/python-v3.6+-green)
 
 ![logo](https://user-images.githubusercontent.com/19988419/100555535-18598280-3294-11eb-80ed-ca5a0c3455d6.png)
 
@@ -38,11 +38,24 @@ This tool is written natively in **Python 3** (version 3.6+) using the common li
 ---
 
 ## Installation
+
+### Docker
+The preferred usage for jwt_tool is with the [official Dockerhub-hosted jwt_tool docker image](https://hub.docker.com/r/ticarpi/jwt_tool)  
+The base command for running this is as follows:  
+Base command for running jwt_tool:  
+`docker run -it --network "host" --rm -v "${PWD}:/tmp" -v "${HOME}/.jwt_tool:/root/.jwt_tool" ticarpi/jwt_tool`  
+
+By using the above command you can tag on any other arguments as normal.  
+Note that local files in your current working directory will be mapped into the docker container's /tmp directory, so you can use them using that absolute path in your arguments.  
+i.e.  
+*/tmp/localfile.txt*
+
+### Manual Install
 Installation is just a case of downloading the `jwt_tool.py` file (or `git clone` the repo).  
 (`chmod` the file too if you want to add it to your *$PATH* and call it from anywhere.)
 
 `$ git clone https://github.com/ticarpi/jwt_tool`  
-`$ python3 -m pip install termcolor cprint pycryptodomex requests`  
+`$ python3 -m pip install -r requirements.txt`  
 
 On first run the tool will generate a config file, some utility files, logfile, and a set of Public and Private keys in various formats.  
 
@@ -63,6 +76,8 @@ You will also need to install colorama: `python3 -m pip install colorama`
 ## Usage
 The first argument should be the JWT itself (*unless providing this in a header or cookie value*). Providing no additional arguments will show you the decoded token values for review.  
 `$ python3 jwt_tool.py <JWT>`  
+or the Docker base command:  
+`$ docker run -it --network "host" --rm -v "${PWD}:/tmp" -v "${HOME}/.jwt_tool:/root/.jwt_tool" ticarpi/jwt_tool`  
 
 The toolkit will validate the token and list the header and payload values.  
 
