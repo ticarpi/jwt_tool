@@ -98,6 +98,7 @@ Some options such as Verifying tokens require additional parameters/files to be 
 All modes now allow for sending the token directly to an application.  
 You need to specify:  
 * target URL (-t)
+* instead of a target URL, you can put your HTTP request into a file and reference the file with -r. This AUTOMATICALLY populates headers, cookies and POST data so this is the recommended option
 * a request header (-rh) or request cookies (-rc) that are needed by the application (***at least one must contain the token***)
 * (optional) any POST data (where the request is a POST)
 * (optional) any additional jwt_tool options, such as modes or tampering/injection options  
