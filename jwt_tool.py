@@ -409,6 +409,7 @@ def tamperToken(paylDict, headDict, sig):
         elif selection == 0:
             break
         else:
+            cprintc("Invalid selection", "red")
             exit(1)
     cprintc("\nToken payload values:", "white")
     while True:
@@ -513,6 +514,7 @@ def tamperToken(paylDict, headDict, sig):
         elif selection == 0:
             break
         else:
+            cprintc("Invalid selection", "red")
             exit(1)
     if config['argvals']['sigType'] == "" and config['argvals']['exploitType'] == "":
         cprintc("Signature unchanged - no signing method specified (-S or -X)", "cyan")
@@ -1699,10 +1701,8 @@ def preScan():
         if config['argvals']['canaryvalue'] not in config['argvals']['rescontent']:
             cprintc("Canary value ("+config['argvals']['canaryvalue']+") was not found in base request - check that this token is valid and you are still logged in", "red")
             shallWeGoOn = input("Do you wish to continue anyway? (\"Y\" or \"N\")")
-            if shallWeGoOn == "N":
-                exit(1)
-            elif shallWeGoOn == "n":
-                exit(1)
+            if shallWeGoOn == "N" or shallWeGoOn == "n":
+                exit(0)
     origResSize, origResCode = config['argvals']['ressize'], config['argvals']['rescode']
     jwtOut("null", "Prescan: no token", "Prescan: no token")
     nullResSize, nullResCode = config['argvals']['ressize'], config['argvals']['rescode']
@@ -1710,10 +1710,8 @@ def preScan():
         if origResCode == nullResCode:
             cprintc("Valid and missing token requests return the same Status Code.\nYou should probably specify something from the page that identifies the user is logged-in (e.g. -cv \"Welcome back, ticarpi!\")", "red")
             shallWeGoOn = input("Do you wish to continue anyway? (\"Y\" or \"N\")")
-            if shallWeGoOn == "N":
-                exit(1)
-            elif shallWeGoOn == "n":
-                exit(1)
+            if shallWeGoOn == "N" or shallWeGoOn == "n":
+                exit(0)
     jwtTweak = contents.decode()+"."+sig[:-4]
     jwtOut(jwtTweak, "Prescan: Broken signature", "This token was sent to check if the signature is being checked")
     jwtOut(jwt, "Prescan: repeat original token", "Prescan: repeat original token")
@@ -1785,7 +1783,7 @@ def runExploits():
 def runActions():
     if args.tamper:
         tamperToken(paylDict, headDict, sig)
-        exit(1)
+        exit(0)
     if args.verify:
         if args.pubkey:
             algType = headDict["alg"][0:2]
@@ -1794,21 +1792,23 @@ def runActions():
                     verifyTokenRSA(headDict, paylDict, sig, args.pubkey)
                 else:
                     verifyTokenRSA(headDict, paylDict, sig, config['crypto']['pubkey'])
-                exit(1)
+                exit(0)
             elif algType == "ES":
                 if config['crypto']['pubkey']:
                     verifyTokenEC(headDict, paylDict, sig, config['crypto']['pubkey'])
                 else:
                     cprintc("No Public Key provided (-pk)\n", "red")
                     parser.print_usage()
-                exit(1)
+                    exit(1)
+                exit(0)
             elif algType == "PS":
                 if config['crypto']['pubkey']:
                     verifyTokenPSS(headDict, paylDict, sig, config['crypto']['pubkey'])
                 else:
                     cprintc("No Public Key provided (-pk)\n", "red")
                     parser.print_usage()
-                exit(1)
+                    exit(1)
+                exit(0)
             else:
                 cprintc("Algorithm not supported for verification", "red")
                 exit(1)
@@ -1817,7 +1817,7 @@ def runActions():
         else:
             cprintc("No Public Key or JWKS file provided (-pk/-jw)\n", "red")
             parser.print_usage()
-        exit(1)
+            exit(1)
     runExploits()
     if args.crack:
         if args.password:
@@ -1830,7 +1830,7 @@ def runActions():
         else:
             cprintc("No cracking option supplied:\nPlease specify a password/dictionary/Public Key\n", "red")
             parser.print_usage()
-        exit(1)
+            exit(1)
     if args.query and config['argvals']['sigType'] != "":
         signingToken(headDict, paylDict)
 
@@ -2209,15 +2209,15 @@ if __name__ == '__main__':
                         headDict, paylDict, sig, contents = validateToken(newContents+"."+sig)
                     injectOut(newheadDict, newpaylDict)
                     nextVal = valLst.readline()
-            exit(1)
+            exit(0)
         else:
             if not args.mode:
                 injectOut(newheadDict, newpaylDict)
-                exit(1)
+                exit(0)
     if args.mode:
         if not config['argvals']['targeturl'] and not args.bare:
             cprintc("No target secified (-t), cannot scan offline.", "red")
             exit(1)
         runScanning()
     runActions()
-    exit(1)
+    exit(0)
