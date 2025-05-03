@@ -1209,7 +1209,10 @@ def dissectPayl(paylDict, count=False):
         else:
             placeholder = "+"
         if claim in ["exp", "nbf", "iat"]:
-            timestamp = datetime.fromtimestamp(int(paylDict[claim]))
+            try:
+                timestamp = datetime.fromtimestamp(int(paylDict[claim]))
+            except ValueError:
+                timestamp = datetime.fromisoformat(paylDict[claim])
             if claim == "exp":
                 if int(timestamp.timestamp()) < nowtime:
                     expiredtoken = True
