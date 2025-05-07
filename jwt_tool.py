@@ -605,30 +605,35 @@ def crackSig(sig, contents):
         cprintc(utf8errors, " UTF-8 incompatible passwords skipped", "cyan")
 
 def castInput(newInput):
-    if "{" in str(newInput):
-        try:
-            jsonInput = json.loads(newInput)
-            return jsonInput
-        except ValueError:
-            pass
-    if "\"" in str(newInput):
-        return newInput.strip("\"")
-    elif newInput == "True" or newInput == "true":
-        return True
-    elif newInput == "False" or newInput == "false":
-        return False
-    elif newInput == "null":
-        return None
-    else:
+    if isinstance(newInput, dict):  # Handle nested dictionaries
+        return {key: castInput(value) for key, value in newInput.items()}
+    elif isinstance(newInput, list):  # Handle lists
+        return [castInput(item) for item in newInput]
+    elif isinstance(newInput, str):  # Handle strings
+        if "{" in newInput:  # Check if it might be a JSON object
+            try:
+                jsonInput = json.loads(newInput)
+                return jsonInput
+            except (ValueError, TypeError):
+                pass
+        if "\"" in newInput:
+            return newInput.strip("\"")
+        elif newInput in ["True", "true"]:
+            return True
+        elif newInput in ["False", "false"]:
+            return False
+        elif newInput == "null":
+            return None
+    else:  # Handle numbers and other types
         try:
             numInput = float(newInput)
             try:
                 intInput = int(newInput)
                 return intInput
-            except:
+            except ValueError:
                 return numInput
-        except:
-            return str(newInput)
+        except (ValueError, TypeError):
+            pass
     return newInput
 
 def buildSubclaim(newVal, claimList, selection):
