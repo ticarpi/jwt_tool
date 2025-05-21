@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jwt-tool"
+version = "2.3.0"
+requires-python = ">=3.6"
+dependencies = ["termcolor", "cprint", "pycryptodomex", "requests", "ratelimit", "importlib_resources"]
+
+[project.scripts]
+jwt-tool = "entry:run"
+
+[tool.setuptools]
+packages = ["files", "jwt_tool"]
+py-modules = ["entry", "jwt_tool", "files"]
+
+[tool.setuptools.package-data]
+files = ["common-headers.txt", "common-payloads.txt", "jwks-common.txt", "jwt-common.txt"]
+jwt_tool = ["jwt_tool.py"]
+
+# [tool.setuptools.packages.find]
+# where = ["files"]

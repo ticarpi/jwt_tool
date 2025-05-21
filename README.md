@@ -52,6 +52,16 @@ Note that local files in your current working directory will be mapped into the 
 i.e.  
 */tmp/localfile.txt*
 
+### Pipx / UV
+
+If you have [pipx](https://pypa.github.io/pipx/), [uv](https://astral.sh/uv) or any other Python package manager installed, you can install the tool globally with the following command:
+
+`$ pipx install git+https://github.com/ticarpi/jwt_tool`
+
+or
+
+`$ uv tool install git+https://github.com/ticarpi/jwt_tool`
+
 ### Manual Install
 Installation is just a case of downloading the `jwt_tool.py` file (or `git clone` the repo).  
 (`chmod` the file too if you want to add it to your *$PATH* and call it from anywhere.)

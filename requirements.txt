@@ -3,3 +3,4 @@ cprint
 pycryptodomex
 requests
 ratelimit
+importlib_resources
