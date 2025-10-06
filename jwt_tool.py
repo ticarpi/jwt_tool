@@ -19,7 +19,7 @@ import json
 import random
 from urllib.parse import urljoin, urlparse
 import argparse
-from datetime import datetime
+from datetime import datetime, timezone
 import configparser
 from http.cookies import SimpleCookie
 from collections import OrderedDict
@@ -1202,38 +1202,50 @@ def dissectPayl(paylDict, count=False):
     countval = 0
     expiredtoken = False
     nowtime = int(datetime.now().timestamp())
+
     for claim in paylDict:
         countval += 1
-        if count:
-            placeholder = str(countval)
-        else:
-            placeholder = "+"
+        placeholder = str(countval) if count else "+"
+
         if claim in ["exp", "nbf", "iat"]:
-            timestamp = datetime.fromtimestamp(int(paylDict[claim]))
-            if claim == "exp":
-                if int(timestamp.timestamp()) < nowtime:
+            raw_val = paylDict[claim]
+            try:
+                timestamp = datetime.fromtimestamp(int(raw_val), tz=timezone.utc)
+                timestr = timestamp.strftime('%Y-%m-%d %H:%M:%S') + " (UTC)"
+                # Only check expiry if conversion worked
+                if claim == "exp" and int(timestamp.timestamp()) < nowtime:
                     expiredtoken = True
-            cprintc("["+placeholder+"] "+claim+" = "+str(paylDict[claim])+"    ==> TIMESTAMP = "+timestamp.strftime('%Y-%m-%d %H:%M:%S')+" (UTC)", "green")
+            except (OverflowError, OSError, ValueError):
+                # Handle extremely large or invalid timestamps gracefully
+                timestamp = None
+                timestr = f"(timestamp {raw_val} out of range)"
+
+            cprintc(f"[{placeholder}] {claim} = {raw_val}    ==> TIMESTAMP = {timestr}", "green")
             timeseen += 1
             comparestamps.append(claim)
+
         elif isinstance(paylDict[claim], dict):
-                cprintc("["+placeholder+"] "+claim+" = JSON object:", "green")
-                for subclaim in paylDict[claim]:
-                    if type(castInput(paylDict[claim][subclaim])) == str:
-                        cprintc("    [+] "+subclaim+" = \""+str(paylDict[claim][subclaim])+"\"", "green")
-                    elif paylDict[claim][subclaim] == None:
-                        cprintc("    [+] "+subclaim+" = null", "green")
-                    elif paylDict[claim][subclaim] == True and not paylDict[claim][subclaim] == 1:
-                        cprintc("    [+] "+subclaim+" = true", "green")
-                    elif paylDict[claim][subclaim] == False and not paylDict[claim][subclaim] == 0:
-                        cprintc("    [+] "+subclaim+" = false", "green")
-                    else:
-                        cprintc("    [+] "+subclaim+" = "+str(paylDict[claim][subclaim]), "green")
+            cprintc(f"[{placeholder}] {claim} = JSON object:", "green")
+            for subclaim in paylDict[claim]:
+                val = paylDict[claim][subclaim]
+                if isinstance(castInput(val), str):
+                    cprintc(f"    [+] {subclaim} = \"{val}\"", "green")
+                elif val is None:
+                    cprintc(f"    [+] {subclaim} = null", "green")
+                elif val is True and val != 1:
+                    cprintc(f"    [+] {subclaim} = true", "green")
+                elif val is False and val != 0:
+                    cprintc(f"    [+] {subclaim} = false", "green")
+                else:
+                    cprintc(f"    [+] {subclaim} = {val}", "green")
+
         else:
-            if type(paylDict[claim]) == str:
-                cprintc("["+placeholder+"] "+claim+" = \""+str(paylDict[claim])+"\"", "green")
+            val = paylDict[claim]
+            if isinstance(val, str):
+                cprintc(f"[{placeholder}] {claim} = \"{val}\"", "green")
             else:
-                cprintc("["+placeholder+"] "+claim+" = "+str(paylDict[claim]), "green")
+                cprintc(f"[{placeholder}] {claim} = {val}", "green")
+
     return comparestamps, expiredtoken
 
 def validateToken(jwt):
