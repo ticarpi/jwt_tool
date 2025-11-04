@@ -1219,7 +1219,19 @@ def dissectPayl(paylDict, count=False):
         elif isinstance(paylDict[claim], dict):
                 cprintc("["+placeholder+"] "+claim+" = JSON object:", "green")
                 for subclaim in paylDict[claim]:
-                    if type(castInput(paylDict[claim][subclaim])) == str:
+                    # Handle nested dicts (e.g., resource_access['account'] = {'roles': [...]})
+                    if isinstance(paylDict[claim][subclaim], dict):
+                        cprintc("    [+] "+subclaim+" = JSON object:", "green")
+                        for nested_subclaim in paylDict[claim][subclaim]:
+                            if isinstance(paylDict[claim][subclaim][nested_subclaim], list):
+                                cprintc("        [+] "+nested_subclaim+" = "+str(paylDict[claim][subclaim][nested_subclaim]), "green")
+                            elif type(paylDict[claim][subclaim][nested_subclaim]) == str:
+                                cprintc("        [+] "+nested_subclaim+" = \""+str(paylDict[claim][subclaim][nested_subclaim])+"\"", "green")
+                            else:
+                                cprintc("        [+] "+nested_subclaim+" = "+str(paylDict[claim][subclaim][nested_subclaim]), "green")
+                    elif isinstance(paylDict[claim][subclaim], list):
+                        cprintc("    [+] "+subclaim+" = "+str(paylDict[claim][subclaim]), "green")
+                    elif type(castInput(paylDict[claim][subclaim])) == str:
                         cprintc("    [+] "+subclaim+" = \""+str(paylDict[claim][subclaim])+"\"", "green")
                     elif paylDict[claim][subclaim] == None:
                         cprintc("    [+] "+subclaim+" = null", "green")
