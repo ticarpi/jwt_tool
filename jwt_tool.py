@@ -1525,11 +1525,10 @@ def scanModePlaybook():
         cprintc("External service interactions not tested - enter listener URL into 'jwtconf.ini' to try this option", "red")
     # Accept Common HMAC secret (as alterative signature)
     with open(config['input']['wordlist'], "r", encoding='utf-8', errors='ignore') as commonPassList:
-        commonPass = commonPassList.readline().rstrip()
-        while commonPass:
+        for commonPass in commonPassList:
+            commonPass = commonPass.rstrip()
             newSig, newContents = signTokenHS(headDict, paylDict, commonPass, 256)
             jwtOut(newContents+"."+newSig, "Checking for alternative accepted HMAC signatures, based on common passwords. Testing: "+commonPass+"", "This token can exploit a hard-coded common password in the config")
-            commonPass = commonPassList.readline().rstrip()
     # SCAN COMPLETE
     cprintc("Scanning mode completed: review the above results.\n", "magenta")
     # Further manual testing: check expired token, brute key, find Public Key, run other scans
