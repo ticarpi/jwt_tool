@@ -222,7 +222,7 @@ def jwtOut(token, fromMod, desc=""):
                     headerSub = p.subn(token, eachHeader, 0)
                     headertoken[0].append(headerSub[0])
                     if headerSub[1] == 1:
-                        headertoken[1] = 1
+                        headertoken[1] += 1
                 except:
                     pass
         else:
