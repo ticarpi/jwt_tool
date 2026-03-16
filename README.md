@@ -52,14 +52,35 @@ Note that local files in your current working directory will be mapped into the 
 i.e.  
 */tmp/localfile.txt*
 
-### Manual Install
-Installation is just a case of downloading the `jwt_tool.py` file (or `git clone` the repo).  
-(`chmod` the file too if you want to add it to your *$PATH* and call it from anywhere.)
+### Install via uv or pip
+You can install and run jwt_tool as a CLI.
 
-`$ git clone https://github.com/ticarpi/jwt_tool`  
-`$ python3 -m pip install -r requirements.txt`  
+Using uv:
+```
+uv tool install .
+uv tool install git+https://github.com/ticarpi/jwt_tool.git
+```
 
-On first run the tool will generate a config file, some utility files, logfile, and a set of Public and Private keys in various formats.  
+Using pip:
+```
+python3 -m pip install .
+python3 -m pip install git+https://github.com/ticarpi/jwt_tool.git
+```
+
+After installation, use the console script:
+```
+jwt-tool -h
+jwt-tool <JWT> [options]
+```
+
+Optional: manual script usage (no install)
+```
+git clone https://github.com/ticarpi/jwt_tool
+chmod +x jwt_tool.py
+python3 jwt_tool.py <JWT>
+```
+
+On first run the tool will generate a config file, some utility files, logfile, and a set of Public and Private keys in various formats.
 
 ### Custom Configs
 * To make best use of the scanning options it is **strongly advised** to copy the custom-generated JWKS file somewhere that can be accessed remotely via a URL. This address should then be stored in `jwtconf.ini` as the "jwkloc" value.  
@@ -67,16 +88,26 @@ On first run the tool will generate a config file, some utility files, logfile, 
 ***Review the other options in the config file to customise your experience.***
 
 ### Colour bug in Windows
-To fix broken colours in Windows cmd/Powershell: uncomment the below two lines in `jwt_tool.py` (remove the "# " from the beginning of each line)  
-You will also need to install colorama: `python3 -m pip install colorama`
+If colours are not displaying correctly in Windows cmd/PowerShell, install the optional dependency group. The script will auto-enable colour support when `colorama` is present.
+
+Using uv:
 ```
-# import colorama
-# colorama.init()
+uv tool install .[win-colour]
 ```
+
+Using pip:
+```
+python3 -m pip install .[win-colour]
+```
+
 ---
 
 ## Usage
 The first argument should be the JWT itself (*unless providing this in a header or cookie value*). Providing no additional arguments will show you the decoded token values for review.  
+`$ jwt-tool <JWT>`  
+or as a module:  
+`$ python3 -m jwt_tool <JWT>`  
+or directly from the script:  
 `$ python3 jwt_tool.py <JWT>`  
 or the Docker base command:  
 `$ docker run -it --network "host" --rm -v "${PWD}:/tmp" -v "${HOME}/.jwt_tool:/root/.jwt_tool" ticarpi/jwt_tool`  

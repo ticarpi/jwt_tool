@@ -1,5 +1,15 @@
+# Install with uv (recommended)
+uv tool install git+https://github.com/ticarpi/jwt_tool.git
+
+# Or install from a local checkout
 git clone https://github.com/ticarpi/jwt_tool
 cd jwt_tool
-sudo apt install python3-pip
-python3 -m pip install termcolor cprint pycryptodomex requests
-chmod +x jwt_tool.py
+uv tool install .
+
+# Install with pip (alternative)
+python3 -m pip install git+https://github.com/ticarpi/jwt_tool.git
+# Or from the local checkout
+python3 -m pip install .
+
+# Run the tool
+jwt-tool -h

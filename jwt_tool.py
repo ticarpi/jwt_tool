@@ -50,9 +50,12 @@ except:
     print("On most Linux systems you can run the following command to install:")
     print("python3 -m pip install requests\n")
     exit(1)
-# To fix broken colours in Windows cmd/Powershell: uncomment the below two lines. You will need to install colorama: 'python3 -m pip install colorama'
-# import colorama
-# colorama.init()
+# Attempt to enable ANSI colours on Windows if colorama is available
+try:
+    import colorama
+    colorama.init()
+except Exception:
+    pass
 
 # CONSTANTS
 DEFAULT_RATE_LIMIT  = 999999999
@@ -1847,7 +1850,10 @@ def printLogo():
     print(" \x1b[36mVersion "+jwttoolvers+"          \x1b[0m      \\______|             \x1b[36m@ticarpi\x1b[0m      ")
     print()
 
-if __name__ == '__main__':
+def main():
+    global args, parser, config, path, logFilename, configFileName, jwt
+    global headDict, paylDict, sig, contents, paylB64, newContents
+
     parser = argparse.ArgumentParser(epilog="If you don't have a token, try this one:\neyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpbiI6InRpY2FycGkifQ.bsSwqj2c2uI9n7-ajmi3ixVGhPUiY7jO9SUn9dm15Po", formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("jwt", nargs='?', type=str,
                         help="the JWT to tinker with (no need to specify if in header/cookies)")
@@ -2216,8 +2222,12 @@ if __name__ == '__main__':
                 exit(1)
     if args.mode:
         if not config['argvals']['targeturl'] and not args.bare:
-            cprintc("No target secified (-t), cannot scan offline.", "red")
+            cprintc("No target specified (-t), cannot scan offline.", "red")
             exit(1)
         runScanning()
     runActions()
     exit(1)
+
+
+if __name__ == "__main__":
+    main()

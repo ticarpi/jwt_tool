@@ -1,0 +1,21 @@
+[project]
+name = "jwt-tool"
+version = "2.3.0"
+description = "🐍 A toolkit for testing, tweaking and cracking JSON Web Tokens"
+readme = "README.md"
+requires-python = ">=3.6"
+dependencies = [
+    "cprint>=1.2.2",
+    "pycryptodomex>=3.23.0",
+    "ratelimit>=2.2.1",
+    "requests>=2.27.1",
+    "termcolor>=1.1.0",
+]
+
+[project.scripts]
+jwt-tool = "jwt_tool:main"
+
+[project.optional-dependencies]
+win-colour = [
+  "colorama>=0.4.6",
+]
