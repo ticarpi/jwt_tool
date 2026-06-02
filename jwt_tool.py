@@ -223,7 +223,7 @@ def jwtOut(token, fromMod, desc=""):
                     headertoken[0].append(headerSub[0])
                     if headerSub[1] == 1:
                         headertoken[1] = 1
-                except:
+                except Exception:
                     pass
         else:
             headertoken = [[],0]
@@ -239,7 +239,7 @@ def jwtOut(token, fromMod, desc=""):
 
         try:
             cookiedict = parse_dict_cookies(cookietoken[0])
-        except:
+        except Exception:
             cookiedict = {}
 
 
@@ -278,7 +278,7 @@ def jwtOut(token, fromMod, desc=""):
     setLog(token, genTime, logID, fromMod, curTargetUrl, additional)
     try:
         config['argvals']['rescode'],config['argvals']['ressize'],config['argvals']['rescontent'] = str(resData[0]),str(resData[1]),str(resData[2])
-    except:
+    except Exception:
         pass
 
 def setLog(jwt, genTime, logID, modulename, targetURL, additional):
@@ -321,7 +321,7 @@ def checkPubKeyExploit(headDict, paylB64, pubKey):
     try:
         key = open(pubKey).read()
         cprintc("File loaded: "+pubKey, "cyan")
-    except:
+    except Exception:
         cprintc("[-] File not found", "red")
         exit(1)
     newHead = headDict
@@ -369,7 +369,7 @@ def tamperToken(paylDict, headDict, sig):
         cprintc("\nPlease select a field number:\n(or 0 to Continue)", "white")
         try:
             selection = int(input("> "))
-        except:
+        except Exception:
             cprintc("Invalid selection", "red")
             exit(1)
         if selection<len(headList) and selection>0:
@@ -402,7 +402,7 @@ def tamperToken(paylDict, headDict, sig):
                 i += 1
             try:
                 delPair = int(input("> "))
-            except:
+            except Exception:
                 cprintc("Invalid selection", "red")
                 exit(1)
             del headDict[headList[delPair]]
@@ -428,7 +428,7 @@ def tamperToken(paylDict, headDict, sig):
         cprintc("\nPlease select a field number:\n(or 0 to Continue)", "white")
         try:
             selection = int(input("> "))
-        except:
+        except Exception:
             cprintc("Invalid selection", "red")
             exit(1)
         if selection<len(paylList) and selection>0:
@@ -451,7 +451,7 @@ def tamperToken(paylDict, headDict, sig):
             newVal = input("> ")
             try:
                 newVal = int(newVal)
-            except:
+            except Exception:
                 pass
             paylList.append(newPair)
             paylDict[paylList[selection]] = castInput(newVal)
@@ -475,7 +475,7 @@ def tamperToken(paylDict, headDict, sig):
             cprintc("\nPlease select an option from above (1-5):", "white")
             try:
                 selection = int(input("> "))
-            except:
+            except Exception:
                 cprintc("Invalid selection", "red")
                 exit(1)
             if selection == 1:
@@ -561,7 +561,7 @@ def checkSigKid(sig, contents):
         key1 = open(config['argvals']['keyFile']).read()
         cprintc("File loaded: "+config['argvals']['keyFile'], "cyan")
         testKey(key1.encode(), sig, contents, headDict, quiet)
-    except:
+    except Exception:
         cprintc("Could not load key file", "red")
         exit(1)
 
@@ -575,7 +575,7 @@ def crackSig(sig, contents):
         # cprintc("File loaded: "+config['argvals']['keyList'], "cyan")
         keyLst = open(config['argvals']['keyList'], "r", encoding='utf-8', errors='ignore')
         nextKey = keyLst.readline()
-    except:
+    except Exception:
         cprintc("No dictionary file loaded", "red")
         exit(1)
     # print("Testing passwords in dictionary...")
@@ -585,14 +585,14 @@ def crackSig(sig, contents):
         wordcount += 1
         try:
             cracked = testKey(nextKey.strip().encode('UTF-8'), sig, contents, headDict, quiet)
-        except:
+        except Exception:
             cracked = False
         if not cracked:
             if wordcount % 1000000 == 0:
                 cprintc("[*] Tested "+str(int(wordcount/1000000))+" million passwords so far", "cyan")
             try:
                 nextKey = keyLst.readline()
-            except:
+            except Exception:
                 utf8errors  += 1
                 nextKey = keyLst.readline()
         else:
@@ -625,9 +625,9 @@ def castInput(newInput):
             try:
                 intInput = int(newInput)
                 return intInput
-            except:
+            except Exception:
                 return numInput
-        except:
+        except Exception:
             return str(newInput)
     return newInput
 
@@ -645,7 +645,7 @@ def buildSubclaim(newVal, claimList, selection):
         cprintc("[0] Continue to next step", "white")
         try:
             subSel = int(input("> "))
-        except:
+        except Exception:
             cprintc("Invalid selection", "red")
             exit(1)
         if subSel<=len(newVal) and subSel>0:
@@ -669,7 +669,7 @@ def buildSubclaim(newVal, claimList, selection):
                 s += 1
             try:
                 selSub = int(input("> "))
-            except:
+            except Exception:
                 cprintc("Invalid selection", "red")
                 exit(1)
             delSub = subList[selSub]
@@ -768,7 +768,7 @@ def jwksGen(headDict, paylDict, jku, privKey, kid="jwt_tool"):
     signer = PKCS1_v1_5.new(key)
     try:
         signature = signer.sign(h)
-    except:
+    except Exception:
         cprintc("Invalid Private Key", "red")
         exit(1)
     newSig = base64.urlsafe_b64encode(signature).decode('UTF-8').strip("=")
@@ -805,7 +805,7 @@ def jwksEmbed(newheadDict, newpaylDict):
     signer = PKCS1_v1_5.new(key)
     try:
         signature = signer.sign(h)
-    except:
+    except Exception:
         cprintc("Invalid Private Key", "red")
         exit(1)
     newSig = base64.urlsafe_b64encode(signature).decode('UTF-8').strip("=")
@@ -829,7 +829,7 @@ def signTokenRSA(headDict, paylDict, privKey, hashLength):
     signer = PKCS1_v1_5.new(key)
     try:
         signature = signer.sign(h)
-    except:
+    except Exception:
         cprintc("Invalid Private Key", "red")
         exit(1)
     newSig = base64.urlsafe_b64encode(signature).decode('UTF-8').strip("=")
@@ -853,7 +853,7 @@ def signTokenEC(headDict, paylDict, privKey, hashLength):
     signer = DSS.new(key, 'fips-186-3')
     try:
         signature = signer.sign(h)
-    except:
+    except Exception:
         cprintc("Invalid Private Key", "red")
         exit(1)
     newSig = base64.urlsafe_b64encode(signature).decode('UTF-8').strip("=")
@@ -876,7 +876,7 @@ def signTokenPSS(headDict, paylDict, privKey, hashLength):
         exit(1)
     try:
         signature = pss.new(key).sign(h)
-    except:
+    except Exception:
         cprintc("Invalid Private Key", "red")
         exit(1)
     newSig = base64.urlsafe_b64encode(signature).decode('UTF-8').strip("=")
@@ -889,28 +889,28 @@ def verifyTokenRSA(headDict, paylDict, sig, pubKey):
     if "-" in sig:
         try:
             sig = base64.urlsafe_b64decode(sig)
-        except:
+        except Exception:
             pass
         try:
             sig = base64.urlsafe_b64decode(sig+"=")
-        except:
+        except Exception:
             pass
         try:
             sig = base64.urlsafe_b64decode(sig+"==")
-        except:
+        except Exception:
             pass
     elif "+" in sig:
         try:
             sig = base64.b64decode(sig)
-        except:
+        except Exception:
             pass
         try:
             sig = base64.b64decode(sig+"=")
-        except:
+        except Exception:
             pass
         try:
             sig = base64.b64decode(sig+"==")
-        except:
+        except Exception:
             pass
     else:
         cprintc("Signature not Base64 encoded HEX", "red")
@@ -931,7 +931,7 @@ def verifyTokenRSA(headDict, paylDict, sig, pubKey):
         else:
             cprintc("RSA Signature is INVALID", "red")
             valid = False
-    except:
+    except Exception:
         cprintc("The Public Key is invalid", "red")
     return valid
 
@@ -941,28 +941,28 @@ def verifyTokenEC(headDict, paylDict, sig, pubKey):
     if "-" in str(sig):
         try:
             signature = base64.urlsafe_b64decode(sig)
-        except:
+        except Exception:
             pass
         try:
             signature = base64.urlsafe_b64decode(sig+"=")
-        except:
+        except Exception:
             pass
         try:
             signature = base64.urlsafe_b64decode(sig+"==")
-        except:
+        except Exception:
             pass
     elif "+" in str(sig):
         try:
             signature = base64.b64decode(sig)
-        except:
+        except Exception:
             pass
         try:
             signature = base64.b64decode(sig+"=")
-        except:
+        except Exception:
             pass
         try:
             signature = base64.b64decode(sig+"==")
-        except:
+        except Exception:
             pass
     else:
         cprintc("Signature not Base64 encoded HEX", "red")
@@ -981,7 +981,7 @@ def verifyTokenEC(headDict, paylDict, sig, pubKey):
         verifier.verify(h, signature)
         cprintc("ECC Signature is VALID", "green")
         valid = True
-    except:
+    except Exception:
         cprintc("ECC Signature is INVALID", "red")
         valid = False
     return valid
@@ -993,28 +993,28 @@ def verifyTokenPSS(headDict, paylDict, sig, pubKey):
     if "-" in sig:
         try:
             sig = base64.urlsafe_b64decode(sig)
-        except:
+        except Exception:
             pass
         try:
             sig = base64.urlsafe_b64decode(sig+"=")
-        except:
+        except Exception:
             pass
         try:
             sig = base64.urlsafe_b64decode(sig+"==")
-        except:
+        except Exception:
             pass
     elif "+" in sig:
         try:
             sig = base64.b64decode(sig)
-        except:
+        except Exception:
             pass
         try:
             sig = base64.b64decode(sig+"=")
-        except:
+        except Exception:
             pass
         try:
             sig = base64.b64decode(sig+"==")
-        except:
+        except Exception:
             pass
     else:
         cprintc("Signature not Base64 encoded HEX", "red")
@@ -1031,7 +1031,7 @@ def verifyTokenPSS(headDict, paylDict, sig, pubKey):
         valid = verifier.verify(h, sig)
         cprintc("RSA-PSS Signature is VALID", "green")
         valid = True
-    except:
+    except Exception:
         cprintc("RSA-PSS Signature is INVALID", "red")
         valid = False
     return valid
@@ -1040,7 +1040,7 @@ def exportJWKS(jku):
     try:
         kid = headDict["kid"]
         newSig, newContents, newjwks, privKeyName, jwksName, fulljwks = jwksGen(headDict, paylDict, jku, config['crypto']['privkey'], kid)
-    except:
+    except Exception:
         kid = ""
         newSig, newContents, newjwks, privKeyName, jwksName, fulljwks = jwksGen(headDict, paylDict, jku, config['crypto']['privkey'])
     return newContents, newSig
@@ -1061,7 +1061,7 @@ def parseJWKS(jwksfile):
                 cprintc("Key "+str(i+1), "cyan")
                 kid = str(jwksDict["keys"][i]["kid"])
                 cprintc("kid: "+kid, "cyan")
-            except:
+            except Exception:
                 kid = i
                 cprintc("Key "+str(i+1), "cyan")
             for keyVal in jwksDict["keys"][i].items():
@@ -1075,7 +1075,7 @@ def parseJWKS(jwksfile):
                 cprintc("[+] "+pubkeyName, "green")
                 cprintc("\nAttempting to verify token using "+pubkeyName, "cyan")
                 valid = verifyTokenEC(headDict, paylDict, sig, pubkeyName)
-            except:
+            except Exception:
                 pass
             try:
                 n = str(jwksDict["keys"][i]["n"])
@@ -1085,9 +1085,9 @@ def parseJWKS(jwksfile):
                 cprintc("[+] "+pubkeyName, "green")
                 cprintc("\nAttempting to verify token using "+pubkeyName, "cyan")
                 valid = verifyTokenRSA(headDict, paylDict, sig, pubkeyName)
-            except:
+            except Exception:
                 pass
-    except:
+    except Exception:
         cprintc("Single key file", "white")
         for jkey in jwksDict:
             cprintc("[+] "+jkey+" = "+str(jwksDict[jkey]), "green")
@@ -1100,7 +1100,7 @@ def parseJWKS(jwksfile):
             cprintc("[+] "+pubkeyName, "green")
             cprintc("\nAttempting to verify token using "+pubkeyName, "cyan")
             valid = verifyTokenEC(headDict, paylDict, sig, pubkeyName)
-        except:
+        except Exception:
             pass
         try:
             kid = 1
@@ -1111,33 +1111,33 @@ def parseJWKS(jwksfile):
             cprintc("[+] "+pubkeyName, "green")
             cprintc("\nAttempting to verify token using "+pubkeyName, "cyan")
             valid = verifyTokenRSA(headDict, paylDict, sig, pubkeyName)
-        except:
+        except Exception:
             pass
 
 def genECPubFromJWKS(x, y, kid, nowtime):
     try:
         x = int.from_bytes(base64.urlsafe_b64decode(x), byteorder='big')
-    except:
+    except Exception:
         pass
     try:
         x = int.from_bytes(base64.urlsafe_b64decode(x+"="), byteorder='big')
-    except:
+    except Exception:
         pass
     try:
         x = int.from_bytes(base64.urlsafe_b64decode(x+"=="), byteorder='big')
-    except:
+    except Exception:
         pass
     try:
         y = int.from_bytes(base64.urlsafe_b64decode(y), byteorder='big')
-    except:
+    except Exception:
         pass
     try:
         y = int.from_bytes(base64.urlsafe_b64decode(y+"="), byteorder='big')
-    except:
+    except Exception:
         pass
     try:
         y = int.from_bytes(base64.urlsafe_b64decode(y+"=="), byteorder='big')
-    except:
+    except Exception:
         pass
     new_key = ECC.construct(curve='P-256', point_x=x, point_y=y)
     pubKey = new_key.public_key().export_key(format="PEM")+"\n"
@@ -1149,27 +1149,27 @@ def genECPubFromJWKS(x, y, kid, nowtime):
 def genRSAPubFromJWKS(n, e, kid, nowtime):
     try:
         n = int.from_bytes(base64.urlsafe_b64decode(n), byteorder='big')
-    except:
+    except Exception:
         pass
     try:
         n = int.from_bytes(base64.urlsafe_b64decode(n+"="), byteorder='big')
-    except:
+    except Exception:
         pass
     try:
         n = int.from_bytes(base64.urlsafe_b64decode(n+"=="), byteorder='big')
-    except:
+    except Exception:
         pass
     try:
         e = int.from_bytes(base64.urlsafe_b64decode(e), byteorder='big')
-    except:
+    except Exception:
         pass
     try:
         e = int.from_bytes(base64.urlsafe_b64decode(e+"="), byteorder='big')
-    except:
+    except Exception:
         pass
     try:
         e = int.from_bytes(base64.urlsafe_b64decode(e+"=="), byteorder='big')
-    except:
+    except Exception:
         pass
     new_key = RSA.construct((n, e))
     pubKey = new_key.publickey().exportKey(format="PEM")
@@ -1239,12 +1239,12 @@ def dissectPayl(paylDict, count=False):
 def validateToken(jwt):
     try:
         headB64, paylB64, sig = jwt.split(".",3)
-    except:
+    except Exception:
         cprintc("[-] Invalid token:\nNot 3 parts -> header.payload.signature", "red")
         exit(1)
     try:
         sig = base64.urlsafe_b64encode(base64.urlsafe_b64decode(sig + "=" * (-len(sig) % 4))).decode('UTF-8').strip("=")
-    except:
+    except Exception:
         cprintc("[-] Invalid token:\nCould not base64-decode SIGNATURE - incorrect formatting/invalid characters", "red")
         cprintc("----------------", "white")
         cprintc(headB64, "cyan")
@@ -1255,7 +1255,7 @@ def validateToken(jwt):
     contents = contents.encode()
     try:
         head = base64.urlsafe_b64decode(headB64 + "=" * (-len(headB64) % 4))
-    except:
+    except Exception:
         cprintc("[-] Invalid token:\nCould not base64-decode HEADER - incorrect formatting/invalid characters", "red")
         cprintc("----------------", "white")
         cprintc(headB64, "red")
@@ -1264,7 +1264,7 @@ def validateToken(jwt):
         exit(1)
     try:
         payl = base64.urlsafe_b64decode(paylB64 + "=" * (-len(paylB64) % 4))
-    except:
+    except Exception:
         cprintc("[-] Invalid token:\nCould not base64-decode PAYLOAD - incorrect formatting/invalid characters", "red")
         cprintc("----------------", "white")
         cprintc(headB64, "cyan")
@@ -1273,7 +1273,7 @@ def validateToken(jwt):
         exit(1)
     try:
         headDict = json.loads(head, object_pairs_hook=OrderedDict)
-    except:
+    except Exception:
         cprintc("[-] Invalid token:\nHEADER not valid JSON format", "red")
 
         cprintc(head.decode('UTF-8'), "red")
@@ -1284,7 +1284,7 @@ def validateToken(jwt):
     else:
         try:
             paylDict = json.loads(payl, object_pairs_hook=OrderedDict)
-        except:
+        except Exception:
             cprintc("[-] Invalid token:\nPAYLOAD not valid JSON format", "red")
             cprintc(payl.decode('UTF-8'), "red")
             exit(1)
@@ -1371,7 +1371,7 @@ def searchLog(logID):
             qOutput = re.sub(logID+' - ', '', qOutput)
             try:
                 jwt = re.findall(r'eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', qResult)[-1]
-            except:
+            except Exception:
                 cprintc("JWT not included in log", "red")
                 exit(1)
             cprintc(logID+"\n"+qOutput, "green")
@@ -1442,7 +1442,7 @@ def scanModePlaybook():
     # Exploit: jwks injection
     try:
         origjwk = headDict["jwk"]
-    except:
+    except Exception:
         origjwk = False
     jwksig, jwksContents = jwksEmbed(headDict, paylDict)
     jwtOut(jwksContents+"."+jwksig, "Exploit: Injected JWKS (-X i)")
@@ -1454,7 +1454,7 @@ def scanModePlaybook():
     # Exploit: spoof jwks
     try:
         origjku = headDict["jku"]
-    except:
+    except Exception:
         origjku = False
         if config['services']['jwksloc']:
             jku = config['services']['jwksloc']
@@ -1470,7 +1470,7 @@ def scanModePlaybook():
     # kid testing... start
     try:
         origkid = headDict["kid"]
-    except:
+    except Exception:
         origkid = False
     # kid inject: blank field, sign with null
     newheadDict, newHeadB64 = injectheaderclaim("kid", "")
@@ -1550,7 +1550,7 @@ def scanModePlaybook():
         timestamp = datetime.fromtimestamp(int(paylDict['exp']))
         cprintc("[+] Try waiting for the token to expire (\"exp\" value set to: "+timestamp.strftime('%Y-%m-%d %H:%M:%S')+" (UTC))", "green")
         cprintc("Check if still working once expired.", "cyan")
-    except:
+    except Exception:
         pass
 
 def scanModeErrors():
@@ -1598,7 +1598,7 @@ def injectCommonClaims(contentVal):
             origVal = ""
             try:
                 origVal = headDict[nextHeader]
-            except:
+            except Exception:
                 pass
             headDict[nextHeader] = contentVal
             newContents = genContents(headDict, paylDict)
@@ -1614,7 +1614,7 @@ def injectCommonClaims(contentVal):
             origVal = ""
             try:
                 origVal = paylDict[nextPayload]
-            except:
+            except Exception:
                 pass
             paylDict[nextPayload] = contentVal
             newContents = genContents(headDict, paylDict)
@@ -1646,7 +1646,7 @@ def injectExternalInteractionHeader(listenerUrl, headerClaim):
     origVal = ""
     try:
         origVal = headDict[headerClaim]
-    except:
+    except Exception:
         pass
     headDict[headerClaim] = injectUrl
     newContents = genContents(headDict, paylDict)
@@ -1661,7 +1661,7 @@ def injectExternalInteractionPayload(listenerUrl, payloadClaim):
     origVal = ""
     try:
         origVal = paylDict[payloadClaim]
-    except:
+    except Exception:
         pass
     paylDict[payloadClaim] = injectUrl
     newContents = genContents(headDict, paylDict)
@@ -1920,7 +1920,7 @@ if __name__ == '__main__':
         path = os.path.expanduser("~/.jwt_tool")
         if not os.path.exists(path):
             os.makedirs(path)
-    except:
+    except Exception:
         path = sys.path[0]
     logFilename = path+"/logs.txt"
     configFileName = path+"/jwtconf.ini"
@@ -2012,7 +2012,7 @@ if __name__ == '__main__':
             else:
                 cprintc("Rate must be an integer > 0", "red")
                 exit(1)
-        except:
+        except Exception:
             cprintc("Error: could not handle rate argument", "red")
             exit(1)
     if args.targeturl:
@@ -2040,7 +2040,7 @@ if __name__ == '__main__':
                 try:
                     if re.search(r'eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', args.cookies):
                         config['argvals']['headerloc'] = "cookies"
-                except:
+                except Exception:
                     cprintc("Invalid cookie formatting", "red")
                     exit(1)
 
@@ -2048,7 +2048,7 @@ if __name__ == '__main__':
                 try:
                     if re.search(r'eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', str(args.headers)):
                         config['argvals']['headerloc'] = "headers"
-                except:
+                except Exception:
                     cprintc("Invalid header formatting", "red")
                     exit(1)
 
@@ -2056,7 +2056,7 @@ if __name__ == '__main__':
                 try:
                     if re.search(r'eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', str(args.postdata)):
                         config['argvals']['headerloc'] = "postdata"
-                except:
+                except Exception:
                     cprintc("Invalid postdata formatting", "red")
                     exit(1)
 
@@ -2068,7 +2068,7 @@ if __name__ == '__main__':
             
             try:
                 findJWT = re.search(r'eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*', searchString)[0]
-            except:
+            except Exception:
                 cprintc("Cannot find a valid JWT", "red")
                 cprintc(searchString, "cyan")
                 exit(1)
