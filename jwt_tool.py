@@ -107,9 +107,9 @@ def createConfig():
                 test_jwks_out.write(fulljwks)
         jwks_b64 = base64.urlsafe_b64encode(fulljwks.encode('ascii'))
     config['services'] = {'jwt_tool_version': jwttoolvers,
-        '# To disable the proxy option set this value to: False (no quotes). For Docker installations with a Windows host OS set this to: "host.docker.internal:8080"': None, 'proxy': proxyHost+':8080',
-        '# To disable following redirects set this value to: False (no quotes)': None, 'redir': 'True',
-        '# Set this to the URL you are hosting your custom JWKS file (jwttool_custom_jwks.json) - your own server, or maybe use this cheeky reflective URL (https://httpbin.org/base64/{base64-encoded_JWKS_here})': None,
+        '# To disable the proxy option set this value to - False (no quotes). For Docker installations with a Windows host OS set this to - "host.docker.internal-8080"': None, 'proxy': proxyHost+':8080',
+        '# To disable following redirects set this value to - False (no quotes)': None, 'redir': 'True',
+        '# Set this to the URL you are hosting your custom JWKS file (jwttool_custom_jwks.json) - your own server, or maybe use this cheeky reflective URL (https-//httpbin.org/base64/{base64-encoded_JWKS_here})': None,
         'jwksloc': '',
         'jwksdynamic': 'https://httpbin.org/base64/'+jwks_b64.decode(),
         '# Set this to the base URL of a Collaborator server, somewhere you can read live logs, a Request Bin etc.': None, 'httplistener': ''}
